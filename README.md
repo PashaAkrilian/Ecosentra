@@ -1,7 +1,7 @@
 # EcoSentra — Platform Analisis Lahan dan Ekosistem Indonesia
 
-[![CI](https://github.com/PashaAkrilian/EcoSentra-Platform-Analisis-Lahan-dan-Ekosistem-Indonesia/actions/workflows/ci.yml/badge.svg)](https://github.com/PashaAkrilian/EcoSentra-Platform-Analisis-Lahan-dan-Ekosistem-Indonesia/actions/workflows/ci.yml)
-![Lisensi](https://img.shields.io/badge/lisensi-MIT-green)
+[![CI](https://github.com/PashaAkrilian/Ecosentra/actions/workflows/ci.yml/badge.svg)](https://github.com/PashaAkrilian/Ecosentra/actions/workflows/ci.yml)
+[![Lisensi: MIT](https://img.shields.io/badge/lisensi-MIT-green)](./License.txt)
 
 EcoSentra memantau lahan dan ekosistem Indonesia dari **data satelit dan lembaga
 resmi yang terbuka**: titik api (NASA FIRMS), gempa (BMKG), kehijauan vegetasi

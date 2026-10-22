@@ -47,11 +47,15 @@ Test tidak memanggil internet: respons penyedia data diganti fixture di
 Tambahkan di `jobs:` — job berjalan paralel kecuali ada `needs:`. Untuk layanan
 Python baru, salin pola job `geo` (setup-python + cache pip + ruff + pytest).
 
-## Deploy
+## Deploy (CD)
 
-Pipeline ini hanya memverifikasi. Deploy dilakukan manual atau lewat integrasi
-platform (lihat [`deployment.md`](./deployment.md)). Alur cabang mengikuti
-[`git-workflow.md`](./git-workflow.md).
+`.github/workflows/cd.yml` berjalan otomatis setelah CI **hijau di `main`**:
+
+- **web** — deploy produksi ke Vercel. Butuh secret repo `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
+  `VERCEL_PROJECT_ID` (Root Directory proyek Vercel = `apps/web`). Tanpa secret, langkah dilewati dengan peringatan.
+- **images** — build & push image `geo` dan `mcp` ke GHCR (`ghcr.io/<owner>/<repo>-<service>`, tag `latest` + SHA).
+
+Alur cabang: [`git-workflow.md`](./git-workflow.md). Opsi deploy lain: [`deployment.md`](./deployment.md).
 
 ## Catatan perawatan
 

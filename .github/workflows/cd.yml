@@ -1,0 +1,64 @@
+name: CD
+
+# Berjalan hanya setelah CI hijau di main.
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+jobs:
+  web:
+    name: Deploy web ke Vercel
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Lewati jika secret Vercel belum diisi
+        if: env.VERCEL_TOKEN == ''
+        run: echo "::warning::VERCEL_TOKEN/ORG_ID/PROJECT_ID belum diisi; deploy dilewati."
+      # Root Directory (apps/web) diatur di pengaturan proyek Vercel.
+      - name: Deploy produksi
+        if: env.VERCEL_TOKEN != ''
+        run: |
+          npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+  images:
+    name: Push image ${{ matrix.service }} ke GHCR
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [geo, mcp]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build & push
+        run: |
+          repo=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          sha=${{ github.event.workflow_run.head_sha }}
+          docker build -t "$repo-${{ matrix.service }}:latest" -t "$repo-${{ matrix.service }}:${sha::7}" services/${{ matrix.service }}
+          docker push --all-tags "$repo-${{ matrix.service }}"
