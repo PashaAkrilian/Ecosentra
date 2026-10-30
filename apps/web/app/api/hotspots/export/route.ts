@@ -4,6 +4,9 @@ import { handleRoute, HttpError } from "@/server/http"
 import { enforceRateLimit } from "@/server/rateLimit"
 import { getHotspotDataset } from "@/server/sources/firms"
 
+// Muat dingin CSV FIRMS bisa puluhan detik; default serverless (10 dtk) terlalu pendek.
+export const maxDuration = 60
+
 const MAX_EXPORT_FEATURES = 25_000
 
 const CONTENT_TYPES = {
@@ -14,7 +17,7 @@ const CONTENT_TYPES = {
 
 export async function GET(request: Request) {
   return handleRoute(async () => {
-    enforceRateLimit(request, "hotspots-export", 10, 60_000)
+    await enforceRateLimit(request, "hotspots-export", 10, 60_000)
     const { range, province, format } = hotspotExportQuerySchema.parse(
       searchParamsToObject(new URL(request.url).searchParams),
     )

@@ -12,7 +12,7 @@ const querySchema = z.object({
 
 export async function GET(request: Request) {
   return handleRoute(async () => {
-    enforceRateLimit(request, "ecosystem-province", 20, 60_000)
+    await enforceRateLimit(request, "ecosystem-province", 20, 60_000)
     const { iso } = querySchema.parse(searchParamsToObject(new URL(request.url).searchParams))
     try {
       return NextResponse.json(await getProvinceLandCover(iso), {

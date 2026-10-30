@@ -1,4 +1,6 @@
 import "server-only"
+import { after } from "next/server"
+import { redisEnabled, redisPipeline } from "@/server/redis"
 
 interface Entry<T> {
   value?: T
@@ -10,6 +12,50 @@ interface Entry<T> {
 }
 
 const store = new Map<string, Entry<unknown>>()
+// Kunci memuat koordinat dari pengguna; tanpa batas, proses berumur panjang bisa membengkak.
+const MAX_ENTRIES = 500
+
+/** Tulis entri sebagai yang terbaru; di atas batas, buang yang tertua (kecuali yang sedang dimuat). */
+function put(key: string, entry: Entry<unknown>) {
+  store.delete(key)
+  store.set(key, entry)
+  if (store.size <= MAX_ENTRIES) return
+  for (const [k, e] of store) {
+    if (!e.inflight) {
+      store.delete(k)
+      break
+    }
+  }
+}
+
+/** Kerja latar belakang yang tetap hidup di serverless; di luar request (instrumentation, test) promise sudah jalan sendiri. */
+function inBackground(work: Promise<unknown>) {
+  try {
+    after(work)
+  } catch {
+    /* di luar request scope */
+  }
+}
+
+// Tingkat 2 (Redis bersama antar instance): shortcut: tanpa lock lintas instance, dua instance dingin
+// bisa memuat sumber bersamaan; tambahkan SET NX kalau beban sumber jadi masalah.
+async function sharedGet<T>(key: string): Promise<{ value: T; storedAt: number } | undefined> {
+  try {
+    const [raw] = await redisPipeline([["GET", `cache:${key}`]])
+    return typeof raw === "string" ? JSON.parse(raw) : undefined
+  } catch (error) {
+    console.warn(`cache[${key}]: Redis gagal dibaca:`, error instanceof Error ? error.message : error)
+  }
+}
+
+async function sharedSet(key: string, value: unknown, ttlMs: number) {
+  try {
+    const payload = JSON.stringify({ value, storedAt: Date.now() })
+    await redisPipeline([["SET", `cache:${key}`, payload, "EX", Math.ceil(ttlMs / 1000)]])
+  } catch (error) {
+    console.warn(`cache[${key}]: Redis gagal ditulis:`, error instanceof Error ? error.message : error)
+  }
+}
 
 export interface CacheOptions {
   /**
@@ -40,9 +86,21 @@ export async function cached<T>(
   loader: () => Promise<T>,
   { staleMs = ttlMs * 6 }: CacheOptions = {},
 ): Promise<T> {
-  const now = Date.now()
-  const entry = store.get(key) as Entry<T> | undefined
+  let entry = store.get(key) as Entry<T> | undefined
 
+  if (!entry && redisEnabled()) {
+    const shared = await sharedGet<T>(key)
+    if (shared) {
+      entry = {
+        value: shared.value,
+        expiresAt: shared.storedAt + ttlMs,
+        staleUntil: shared.storedAt + ttlMs + staleMs,
+      }
+      put(key, entry)
+    }
+  }
+
+  const now = Date.now()
   if (entry?.value !== undefined && entry.expiresAt > now) return entry.value
 
   const refresh = () => {
@@ -50,15 +108,16 @@ export async function cached<T>(
     if (current?.inflight) return current.inflight
 
     const inflight = loader()
-      .then((value) => {
-        store.set(key, { value, expiresAt: Date.now() + ttlMs, staleUntil: Date.now() + ttlMs + staleMs })
+      .then(async (value) => {
+        put(key, { value, expiresAt: Date.now() + ttlMs, staleUntil: Date.now() + ttlMs + staleMs })
+        if (redisEnabled()) await sharedSet(key, value, ttlMs + staleMs)
         return value
       })
       .catch((error: unknown) => {
         const previous = store.get(key) as Entry<T> | undefined
         if (previous?.value !== undefined && previous.staleUntil > Date.now()) {
           console.warn(`cache[${key}]: sumber gagal, memakai data lama:`, error instanceof Error ? error.message : error)
-          store.set(key, {
+          put(key, {
             value: previous.value,
             expiresAt: Date.now() + Math.min(ttlMs, 60_000),
             staleUntil: previous.staleUntil,
@@ -69,7 +128,7 @@ export async function cached<T>(
         throw error
       })
 
-    store.set(key, {
+    put(key, {
       value: current?.value,
       expiresAt: current?.expiresAt ?? 0,
       staleUntil: current?.staleUntil ?? 0,
@@ -80,7 +139,7 @@ export async function cached<T>(
 
   // Basi tapi masih layak: sajikan sekarang, perbarui diam-diam.
   if (entry?.value !== undefined && entry.staleUntil > now) {
-    void refresh().catch(() => undefined)
+    inBackground(refresh().catch(() => undefined))
     return entry.value
   }
 
