@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next"
 import type { ReactNode } from "react"
-import { Inter } from "next/font/google"
+import { Bricolage_Grotesque, Public_Sans } from "next/font/google"
 import { AuthProvider } from "@/components/auth-provider"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"], display: "swap" })
+const body = Public_Sans({ subsets: ["latin"], variable: "--font-body", display: "swap" })
+const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display", display: "swap" })
 
 export const metadata: Metadata = {
   title: {
@@ -16,13 +17,13 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#047857",
+  themeColor: "#2E6B4E",
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="id">
-      <body className={inter.className}>
+      <body className={`${body.variable} ${display.variable} font-sans`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
