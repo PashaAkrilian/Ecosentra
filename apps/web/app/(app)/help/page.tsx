@@ -241,7 +241,7 @@ export default function HelpPage() {
             </li>
             <li>
               <strong>Model SegFormer (eksperimen).</strong> Repositori ini memuat eksperimen pelatihan model segmentasi di folder{" "}
-              <code className="rounded bg-muted px-1">experiments/</code> dengan akurasi piksel 12–23% — belum layak pakai dan
+              <code className="rounded bg-muted px-1">experiments/</code> (run terbaik: akurasi piksel 78%, mIoU 0,67 pada data OpenEarthMap, belum diuji di Indonesia). Model ini
               <em> tidak</em> dipakai oleh aplikasi. Analisis tutupan lahan di aplikasi memakai dataset Esri/ESA di atas.
             </li>
           </ul>
