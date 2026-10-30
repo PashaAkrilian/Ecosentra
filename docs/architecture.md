@@ -124,7 +124,9 @@ digambar berongga tanpa disambung garis.
 - Cache & rate limit memakai Redis bersama (Upstash) bila `UPSTASH_REDIS_REST_*` diisi; tanpa itu
   in-memory per instance (lihat [ADR-0001](./adr/0001-shared-cache-and-rate-limit.md)).
 - 34 provinsi (data 2017); pemekaran Papua 2022 belum tercermin.
-- Model SegFormer (akurasi piksel 12–23%) belum layak pakai dan tidak dipakai
-  aplikasi; tutupan lahan memakai dataset Esri/ESA. Melatih ulang butuh GPU.
+- Model SegFormer belum dipakai aplikasi. Run-01 gagal (akurasi piksel 12–23%); run-02 di GPU Kaggle mencapai
+  akurasi piksel 77,9% dan mIoU 0,674 pada validasi OpenEarthMap
+  ([`RUN_INFO.md`](../experiments/segformer-openearthmap/run-02-kaggle/RUN_INFO.md)), tetapi belum diukur di area
+  Indonesia dan kelasnya berbeda dari Esri/ESA, jadi tutupan lahan tetap memakai dataset Esri/ESA.
 - Open-Meteo gratis hanya untuk non-komersial; tile peta gratis ada batas pemakaian
   (lihat [`data-sources.md`](./data-sources.md)).
