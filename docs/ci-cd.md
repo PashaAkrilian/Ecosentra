@@ -51,7 +51,10 @@ Python baru, salin pola job `geo` (setup-python + cache pip + ruff + pytest).
 
 `.github/workflows/cd.yml` berjalan otomatis setelah CI **hijau di `main`**:
 
-- **web** — deploy produksi ke Vercel. Butuh secret repo `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
+- **web** — deploy produksi ke Vercel. **Saat ini deploy web dilakukan oleh integrasi Git Vercel** (proyek `ecosentra`
+  tersambung ke `PashaAkrilian/Ecosentra`, Root Directory `apps/web`, sejak 2026-10-31): setiap merge ke `main` membangun
+  produksi. Jangan mengisi secret di bawah selagi integrasi aktif, supaya satu merge tidak men-deploy dua kali.
+  Langkah CD ini hanya cadangan bila integrasi Git dilepas. Butuh secret repo `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
   `VERCEL_PROJECT_ID` (Root Directory proyek Vercel = `apps/web`). Tanpa secret, langkah dilewati dengan peringatan.
 - **images** — build & push image `geo` dan `mcp` ke GHCR (`ghcr.io/<owner>/<repo>-<service>`, tag `latest` + SHA).
 
