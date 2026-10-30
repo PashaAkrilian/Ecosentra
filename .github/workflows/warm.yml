@@ -20,4 +20,6 @@ jobs:
         run: echo "::warning::SITE_URL/CRON_SECRET belum diisi; pemanasan dilewati."
       - name: Panggil route warm
         if: env.SITE_URL != '' && env.CRON_SECRET != ''
-        run: curl --fail --silent --show-error --max-time 90 -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/warm"
+        run: |
+          curl --fail --silent --show-error --max-time 90 \
+            -H "Authorization: Bearer $CRON_SECRET" "$SITE_URL/api/cron/warm"
