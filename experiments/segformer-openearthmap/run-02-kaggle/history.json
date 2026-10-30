@@ -1,0 +1,512 @@
+[
+ {
+  "epoch": 0,
+  "pixel_acc": 0.6967583268954198,
+  "mIoU": 0.4725517680753138,
+  "iou": {
+   "background": 0.0,
+   "bareland": 0.6044,
+   "rangeland": 0.4063,
+   "developed": 0.4527,
+   "road": 0.4364,
+   "tree": 0.6436,
+   "water": 0.3833,
+   "agriculture": 0.6753,
+   "building": 0.651
+  },
+  "t": 81
+ },
+ {
+  "epoch": 1,
+  "pixel_acc": 0.7204570988278975,
+  "mIoU": 0.5933962516804414,
+  "iou": {
+   "background": 0.8873,
+   "bareland": 0.5357,
+   "rangeland": 0.4645,
+   "developed": 0.444,
+   "road": 0.4595,
+   "tree": 0.6575,
+   "water": 0.5341,
+   "agriculture": 0.7028,
+   "building": 0.6552
+  },
+  "t": 140
+ },
+ {
+  "epoch": 2,
+  "pixel_acc": 0.7432944184121429,
+  "mIoU": 0.6304646482234424,
+  "iou": {
+   "background": 0.9301,
+   "bareland": 0.6391,
+   "rangeland": 0.4802,
+   "developed": 0.5124,
+   "road": 0.4856,
+   "tree": 0.6646,
+   "water": 0.5361,
+   "agriculture": 0.7281,
+   "building": 0.698
+  },
+  "t": 200
+ },
+ {
+  "epoch": 3,
+  "pixel_acc": 0.7446762772568278,
+  "mIoU": 0.6206213317155761,
+  "iou": {
+   "background": 0.9241,
+   "bareland": 0.4887,
+   "rangeland": 0.5141,
+   "developed": 0.5035,
+   "road": 0.5177,
+   "tree": 0.6647,
+   "water": 0.5527,
+   "agriculture": 0.7147,
+   "building": 0.7054
+  },
+  "t": 261
+ },
+ {
+  "epoch": 4,
+  "pixel_acc": 0.7457634239210233,
+  "mIoU": 0.6055411463212637,
+  "iou": {
+   "background": 0.9103,
+   "bareland": 0.3156,
+   "rangeland": 0.4914,
+   "developed": 0.5052,
+   "road": 0.5166,
+   "tree": 0.6784,
+   "water": 0.5925,
+   "agriculture": 0.7291,
+   "building": 0.7107
+  },
+  "t": 323
+ },
+ {
+  "epoch": 5,
+  "pixel_acc": 0.7495733709236693,
+  "mIoU": 0.6328410911099305,
+  "iou": {
+   "background": 0.93,
+   "bareland": 0.5485,
+   "rangeland": 0.4704,
+   "developed": 0.5095,
+   "road": 0.502,
+   "tree": 0.6828,
+   "water": 0.611,
+   "agriculture": 0.7217,
+   "building": 0.7196
+  },
+  "t": 385
+ },
+ {
+  "epoch": 6,
+  "pixel_acc": 0.7578864037809991,
+  "mIoU": 0.6459560656206271,
+  "iou": {
+   "background": 0.9389,
+   "bareland": 0.6291,
+   "rangeland": 0.4901,
+   "developed": 0.5224,
+   "road": 0.5212,
+   "tree": 0.6812,
+   "water": 0.5603,
+   "agriculture": 0.7473,
+   "building": 0.7231
+  },
+  "t": 448
+ },
+ {
+  "epoch": 7,
+  "pixel_acc": 0.7609454878994576,
+  "mIoU": 0.6434386304317117,
+  "iou": {
+   "background": 0.9143,
+   "bareland": 0.5911,
+   "rangeland": 0.5181,
+   "developed": 0.5056,
+   "road": 0.5345,
+   "tree": 0.6829,
+   "water": 0.5615,
+   "agriculture": 0.75,
+   "building": 0.7328
+  },
+  "t": 510
+ },
+ {
+  "epoch": 8,
+  "pixel_acc": 0.7646906106638446,
+  "mIoU": 0.6431392257260228,
+  "iou": {
+   "background": 0.9353,
+   "bareland": 0.5131,
+   "rangeland": 0.531,
+   "developed": 0.5316,
+   "road": 0.5308,
+   "tree": 0.6857,
+   "water": 0.5877,
+   "agriculture": 0.741,
+   "building": 0.7319
+  },
+  "t": 572
+ },
+ {
+  "epoch": 9,
+  "pixel_acc": 0.7622453940630479,
+  "mIoU": 0.6291386581638707,
+  "iou": {
+   "background": 0.9439,
+   "bareland": 0.3866,
+   "rangeland": 0.5254,
+   "developed": 0.5348,
+   "road": 0.4942,
+   "tree": 0.69,
+   "water": 0.6034,
+   "agriculture": 0.754,
+   "building": 0.7301
+  },
+  "t": 635
+ },
+ {
+  "epoch": 10,
+  "pixel_acc": 0.7608595131982857,
+  "mIoU": 0.6378720551505799,
+  "iou": {
+   "background": 0.9453,
+   "bareland": 0.4613,
+   "rangeland": 0.5048,
+   "developed": 0.5161,
+   "road": 0.5472,
+   "tree": 0.6874,
+   "water": 0.6037,
+   "agriculture": 0.7391,
+   "building": 0.736
+  },
+  "t": 697
+ },
+ {
+  "epoch": 11,
+  "pixel_acc": 0.7704081857010644,
+  "mIoU": 0.6600469902716694,
+  "iou": {
+   "background": 0.9368,
+   "bareland": 0.6322,
+   "rangeland": 0.5302,
+   "developed": 0.531,
+   "road": 0.5393,
+   "tree": 0.6918,
+   "water": 0.5871,
+   "agriculture": 0.753,
+   "building": 0.7391
+  },
+  "t": 760
+ },
+ {
+  "epoch": 12,
+  "pixel_acc": 0.7667098148980558,
+  "mIoU": 0.6453633652615485,
+  "iou": {
+   "background": 0.9542,
+   "bareland": 0.5123,
+   "rangeland": 0.5205,
+   "developed": 0.5249,
+   "road": 0.5538,
+   "tree": 0.69,
+   "water": 0.5581,
+   "agriculture": 0.7537,
+   "building": 0.7408
+  },
+  "t": 823
+ },
+ {
+  "epoch": 13,
+  "pixel_acc": 0.7739249328027699,
+  "mIoU": 0.6713110331978753,
+  "iou": {
+   "background": 0.9505,
+   "bareland": 0.679,
+   "rangeland": 0.5313,
+   "developed": 0.5376,
+   "road": 0.5434,
+   "tree": 0.6932,
+   "water": 0.5938,
+   "agriculture": 0.7689,
+   "building": 0.7441
+  },
+  "t": 885
+ },
+ {
+  "epoch": 14,
+  "pixel_acc": 0.773431436301981,
+  "mIoU": 0.669390177334016,
+  "iou": {
+   "background": 0.9341,
+   "bareland": 0.6575,
+   "rangeland": 0.5203,
+   "developed": 0.5372,
+   "road": 0.5601,
+   "tree": 0.6938,
+   "water": 0.6096,
+   "agriculture": 0.7693,
+   "building": 0.7426
+  },
+  "t": 948
+ },
+ {
+  "epoch": 15,
+  "pixel_acc": 0.76637088194749,
+  "mIoU": 0.6589252042591345,
+  "iou": {
+   "background": 0.9331,
+   "bareland": 0.6124,
+   "rangeland": 0.5038,
+   "developed": 0.5403,
+   "road": 0.5589,
+   "tree": 0.6726,
+   "water": 0.6176,
+   "agriculture": 0.7463,
+   "building": 0.7453
+  },
+  "t": 1011
+ },
+ {
+  "epoch": 16,
+  "pixel_acc": 0.7758390282456281,
+  "mIoU": 0.6645113489872689,
+  "iou": {
+   "background": 0.9315,
+   "bareland": 0.6061,
+   "rangeland": 0.5304,
+   "developed": 0.538,
+   "road": 0.5603,
+   "tree": 0.6962,
+   "water": 0.5979,
+   "agriculture": 0.7731,
+   "building": 0.7471
+  },
+  "t": 1073
+ },
+ {
+  "epoch": 17,
+  "pixel_acc": 0.7774510860687628,
+  "mIoU": 0.658189570104133,
+  "iou": {
+   "background": 0.9344,
+   "bareland": 0.5352,
+   "rangeland": 0.5537,
+   "developed": 0.5392,
+   "road": 0.5423,
+   "tree": 0.6975,
+   "water": 0.6008,
+   "agriculture": 0.7735,
+   "building": 0.7471
+  },
+  "t": 1136
+ },
+ {
+  "epoch": 18,
+  "pixel_acc": 0.7761612939449936,
+  "mIoU": 0.6706552432215505,
+  "iou": {
+   "background": 0.9499,
+   "bareland": 0.6354,
+   "rangeland": 0.5418,
+   "developed": 0.5531,
+   "road": 0.5444,
+   "tree": 0.693,
+   "water": 0.6127,
+   "agriculture": 0.7602,
+   "building": 0.7454
+  },
+  "t": 1198
+ },
+ {
+  "epoch": 19,
+  "pixel_acc": 0.7785539561501138,
+  "mIoU": 0.6714202119440897,
+  "iou": {
+   "background": 0.9394,
+   "bareland": 0.6355,
+   "rangeland": 0.5428,
+   "developed": 0.5511,
+   "road": 0.5467,
+   "tree": 0.6968,
+   "water": 0.6145,
+   "agriculture": 0.7669,
+   "building": 0.7491
+  },
+  "t": 1261
+ },
+ {
+  "epoch": 20,
+  "pixel_acc": 0.7765740711841782,
+  "mIoU": 0.6701859560344119,
+  "iou": {
+   "background": 0.9424,
+   "bareland": 0.6118,
+   "rangeland": 0.5278,
+   "developed": 0.5498,
+   "road": 0.5655,
+   "tree": 0.6972,
+   "water": 0.6234,
+   "agriculture": 0.771,
+   "building": 0.7427
+  },
+  "t": 1323
+ },
+ {
+  "epoch": 21,
+  "pixel_acc": 0.7808296794621604,
+  "mIoU": 0.6754086061382356,
+  "iou": {
+   "background": 0.9358,
+   "bareland": 0.6466,
+   "rangeland": 0.551,
+   "developed": 0.5456,
+   "road": 0.566,
+   "tree": 0.6987,
+   "water": 0.6112,
+   "agriculture": 0.774,
+   "building": 0.7498
+  },
+  "t": 1386
+ },
+ {
+  "epoch": 22,
+  "pixel_acc": 0.7814788442280204,
+  "mIoU": 0.6785492255822315,
+  "iou": {
+   "background": 0.9401,
+   "bareland": 0.6645,
+   "rangeland": 0.5427,
+   "developed": 0.5472,
+   "road": 0.567,
+   "tree": 0.7006,
+   "water": 0.6184,
+   "agriculture": 0.7739,
+   "building": 0.7525
+  },
+  "t": 1449
+ },
+ {
+  "epoch": 23,
+  "pixel_acc": 0.7816225107851809,
+  "mIoU": 0.6812678196796964,
+  "iou": {
+   "background": 0.9494,
+   "bareland": 0.6649,
+   "rangeland": 0.5348,
+   "developed": 0.5472,
+   "road": 0.5703,
+   "tree": 0.7002,
+   "water": 0.6337,
+   "agriculture": 0.7785,
+   "building": 0.7525
+  },
+  "t": 1512
+ },
+ {
+  "epoch": 24,
+  "pixel_acc": 0.778593221791455,
+  "mIoU": 0.6744188062884796,
+  "iou": {
+   "background": 0.9481,
+   "bareland": 0.6391,
+   "rangeland": 0.5253,
+   "developed": 0.5436,
+   "road": 0.5757,
+   "tree": 0.7025,
+   "water": 0.6206,
+   "agriculture": 0.7619,
+   "building": 0.7529
+  },
+  "t": 1574
+ },
+ {
+  "epoch": 25,
+  "pixel_acc": 0.7819759980857329,
+  "mIoU": 0.6803493349638582,
+  "iou": {
+   "background": 0.942,
+   "bareland": 0.6624,
+   "rangeland": 0.5434,
+   "developed": 0.5477,
+   "road": 0.5738,
+   "tree": 0.7022,
+   "water": 0.63,
+   "agriculture": 0.7663,
+   "building": 0.7554
+  },
+  "t": 1637
+ },
+ {
+  "epoch": 26,
+  "pixel_acc": 0.78353821503607,
+  "mIoU": 0.6812751721000068,
+  "iou": {
+   "background": 0.941,
+   "bareland": 0.652,
+   "rangeland": 0.5487,
+   "developed": 0.5532,
+   "road": 0.5662,
+   "tree": 0.704,
+   "water": 0.6372,
+   "agriculture": 0.7752,
+   "building": 0.754
+  },
+  "t": 1700
+ },
+ {
+  "epoch": 27,
+  "pixel_acc": 0.7810715583869147,
+  "mIoU": 0.6801873015821672,
+  "iou": {
+   "background": 0.9404,
+   "bareland": 0.6607,
+   "rangeland": 0.5314,
+   "developed": 0.5523,
+   "road": 0.5712,
+   "tree": 0.7035,
+   "water": 0.6453,
+   "agriculture": 0.7621,
+   "building": 0.7548
+  },
+  "t": 1763
+ },
+ {
+  "epoch": 28,
+  "pixel_acc": 0.7823034548723449,
+  "mIoU": 0.6824216622209044,
+  "iou": {
+   "background": 0.9395,
+   "bareland": 0.6613,
+   "rangeland": 0.5418,
+   "developed": 0.5543,
+   "road": 0.5732,
+   "tree": 0.7029,
+   "water": 0.6488,
+   "agriculture": 0.7666,
+   "building": 0.7534
+  },
+  "t": 1826
+ },
+ {
+  "epoch": 29,
+  "pixel_acc": 0.782628359016881,
+  "mIoU": 0.6815305500617205,
+  "iou": {
+   "background": 0.9398,
+   "bareland": 0.6597,
+   "rangeland": 0.541,
+   "developed": 0.5514,
+   "road": 0.5743,
+   "tree": 0.7033,
+   "water": 0.6408,
+   "agriculture": 0.7691,
+   "building": 0.7545
+  },
+  "t": 1888
+ }
+]

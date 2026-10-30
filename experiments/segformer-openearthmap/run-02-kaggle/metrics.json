@@ -1,0 +1,19 @@
+{
+ "pixel_acc": 0.7786744063986374,
+ "mIoU": 0.6739502858244822,
+ "iou": {
+  "background": 0.9573,
+  "bareland": 0.4742,
+  "rangeland": 0.5526,
+  "developed": 0.5441,
+  "road": 0.5683,
+  "tree": 0.6861,
+  "water": 0.7692,
+  "agriculture": 0.7579,
+  "building": 0.7558
+ },
+ "best_epoch_mIoU": 0.6824216622209044,
+ "epochs_run": 30,
+ "val_images": 384,
+ "train_images": 2303
+}
