@@ -42,6 +42,7 @@ data pribadi nonaktif.
 | `apps/web` | UI, API routes, akses data eksternal & Firestore | Next.js 15 (App Router), React 19, TypeScript, Tailwind, Leaflet, Zod |
 | `services/geo` | Tutupan lahan ESA WorldCover lewat Google Earth Engine (opsional) | FastAPI, earthengine-api, slowapi |
 | `services/mcp` | Mengekspos data EcoSentra sebagai tool MCP untuk asisten AI eksternal | MCP Python SDK, httpx |
+| `services/ml` | Tidak ada layanan; hanya README yang menjelaskan kenapa (model SegFormer belum layak) | n/a |
 | `experiments/` | Eksperimen pelatihan SegFormer (riset) | PyTorch / Hugging Face (di luar repo: bobot model) |
 
 ## Struktur `apps/web`
