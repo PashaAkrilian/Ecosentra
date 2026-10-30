@@ -3,6 +3,9 @@ import { hotspotQuerySchema, searchParamsToObject } from "@/lib/schemas"
 import { handleRoute } from "@/server/http"
 import { getHotspotDataset, summarizeHotspots } from "@/server/sources/firms"
 
+// Muat dingin CSV FIRMS bisa puluhan detik; default serverless (10 dtk) terlalu pendek.
+export const maxDuration = 60
+
 export async function GET(request: Request) {
   return handleRoute(async () => {
     const { range, province } = hotspotQuerySchema.parse(searchParamsToObject(new URL(request.url).searchParams))

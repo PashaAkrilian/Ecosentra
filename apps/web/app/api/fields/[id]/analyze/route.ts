@@ -17,7 +17,7 @@ type Params = { params: Promise<{ id: string }> }
 export async function POST(request: Request, { params }: Params) {
   return handleRoute(async () => {
     const user = await requireUser(request)
-    enforceRateLimit(request, "field-analyze", 10, 60_000)
+    await enforceRateLimit(request, "field-analyze", 10, 60_000)
 
     const fieldDoc = await getOwnedSnapshot("fields", (await params).id, user.uid)
     const field = serializeDoc<Field>(fieldDoc)

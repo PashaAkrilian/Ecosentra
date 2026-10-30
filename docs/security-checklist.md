@@ -39,7 +39,7 @@ audit fondasi (Fase 2) supaya jejaknya tidak hilang.
 - [ ] **Verifikasi langsung ke Firebase sungguhan.** Jalur Auth/Firestore diuji dengan Firestore & Auth palsu di memori (logika kepemilikan, validasi, status HTTP). Uji dengan proyek/emulator Firebase nyata belum dijalankan di lingkungan pengembangan ini — lakukan satu putaran manual setelah mengisi kredensial (daftar → tambah lahan → analisis → hapus akun) dan pastikan `firestore.rules` ter-deploy (`firebase deploy --only firestore:rules`).
 - [ ] **Verifikasi email & MFA** tidak diwajibkan (opsional di Firebase Auth).
 - [ ] **CSP masih memakai `'unsafe-inline'` untuk script** (dibutuhkan skrip hidrasi Next.js tanpa nonce). CSP berbasis nonce adalah peningkatan lanjutan.
-- [ ] **Rate limiter & cache per-instance.** Cukup untuk satu instance; untuk skala horizontal gunakan Redis/WAF.
+- [ ] **Rate limiter & cache per-instance tanpa Redis.** Isi `UPSTASH_REDIS_REST_URL`/`TOKEN` agar berlaku lintas instance (lihat ADR-0001). Limiter memakai header IP (`x-vercel-forwarded-for`/`x-forwarded-for`): aman di Vercel, tetapi di host lain harus di belakang proxy yang menimpa header itu.
 - [ ] **Temuan `npm audit` yang tersisa (8: 3 moderate, 5 high)** — semuanya transitif dan tanpa perbaikan upstream yang kompatibel: `postcss` bawaan Next (hanya dipakai saat build), `@grpc/grpc-js` di SDK Firestore klien (tidak dipakai — klien hanya memakai Auth), `uuid` di `@google-cloud/storage`. Pantau lewat Dependabot.
 - [ ] **Tile publik gratis** (OSM, OpenTopoMap) tidak dimaksudkan untuk lalu lintas tinggi — lihat [`data-sources.md`](./data-sources.md).
 

@@ -8,6 +8,9 @@ import { isFirebaseAdminConfigured } from "@/server/firebaseAdmin"
 import { handleRoute, HttpError, readJsonBody } from "@/server/http"
 import { checkRateLimit, enforceRateLimit } from "@/server/rateLimit"
 
+// Muat dingin CSV FIRMS bisa puluhan detik; default serverless (10 dtk) terlalu pendek.
+export const maxDuration = 60
+
 const MAX_BODY_BYTES = 200_000
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -65,7 +68,7 @@ function ndjsonResponse(run: (emit: Emit) => Promise<void>): Response {
 
 export async function POST(request: Request) {
   return handleRoute(async () => {
-    enforceRateLimit(request, "chat", 20, 60_000)
+    await enforceRateLimit(request, "chat", 20, 60_000)
     const body = chatRequestSchema.parse(await readJsonBody(request, MAX_BODY_BYTES))
     const messages = trimHistory(body.messages)
     const question = messages.at(-1)!.content
@@ -73,9 +76,9 @@ export async function POST(request: Request) {
     const { mode, uid, notice } = await resolveMode(request)
 
     if (mode === "claude") {
-      enforceRateLimit(request, "chat-claude", 8, 60_000)
+      await enforceRateLimit(request, "chat-claude", 8, 60_000)
       if (uid) {
-        const daily = checkRateLimit(`chat-claude-day:${uid}`, 150, DAY_MS)
+        const daily = await checkRateLimit(`chat-claude-day:${uid}`, 150, DAY_MS)
         if (!daily.allowed) throw new HttpError(429, "Batas harian asisten AI tercapai. Coba lagi besok.")
       }
     }

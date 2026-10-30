@@ -4,6 +4,9 @@ import { toCompact } from "@/server/export/hotspots"
 import { handleRoute, HttpError } from "@/server/http"
 import { getHotspotDataset, summarizeHotspots } from "@/server/sources/firms"
 
+// Muat dingin CSV FIRMS bisa puluhan detik; default serverless (10 dtk) terlalu pendek.
+export const maxDuration = 60
+
 // Titik api untuk peta (format ringkas). Rentang 7 hari terlalu besar untuk
 // dirender sebagai titik (±50 ribu) — pakai /api/hotspots/summary untuk itu.
 export async function GET(request: Request) {

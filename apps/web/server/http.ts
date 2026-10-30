@@ -67,8 +67,13 @@ export async function readJsonBody(request: Request, maxBytes = MAX_BODY_BYTES):
   }
 }
 
-/** IP klien untuk rate limiting (di belakang proxy/CDN: header x-forwarded-for). */
+/**
+ * IP klien untuk rate limiting. Header ini hanya bisa dipercaya di belakang proxy yang
+ * menimpanya (Vercel menimpa ketiganya); di host lain klien bisa memalsukannya.
+ */
 export function getClientIp(request: Request): string {
+  const vercel = request.headers.get("x-vercel-forwarded-for")
+  if (vercel) return vercel.split(",")[0]!.trim()
   const forwarded = request.headers.get("x-forwarded-for")
   if (forwarded) return forwarded.split(",")[0]!.trim()
   return request.headers.get("x-real-ip") ?? "unknown"

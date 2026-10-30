@@ -42,6 +42,7 @@ data pribadi nonaktif.
 | `apps/web` | UI, API routes, akses data eksternal & Firestore | Next.js 15 (App Router), React 19, TypeScript, Tailwind, Leaflet, Zod |
 | `services/geo` | Tutupan lahan ESA WorldCover lewat Google Earth Engine (opsional) | FastAPI, earthengine-api, slowapi |
 | `services/mcp` | Mengekspos data EcoSentra sebagai tool MCP untuk asisten AI eksternal | MCP Python SDK, httpx |
+| `services/ml` | Tidak ada layanan; hanya README yang menjelaskan kenapa (model SegFormer belum layak) | n/a |
 | `experiments/` | Eksperimen pelatihan SegFormer (riset) | PyTorch / Hugging Face (di luar repo: bobot model) |
 
 ## Struktur `apps/web`
@@ -120,8 +121,8 @@ digambar berongga tanpa disambung garis.
 
 ## Batasan yang diketahui
 
-- Cache & rate limit in-memory (per instance) — cukup untuk satu instance, perlu
-  penyimpanan bersama untuk skala horizontal.
+- Cache & rate limit memakai Redis bersama (Upstash) bila `UPSTASH_REDIS_REST_*` diisi; tanpa itu
+  in-memory per instance (lihat [ADR-0001](./adr/0001-shared-cache-and-rate-limit.md)).
 - 34 provinsi (data 2017); pemekaran Papua 2022 belum tercermin.
 - Model SegFormer (akurasi piksel 12–23%) belum layak pakai dan tidak dipakai
   aplikasi; tutupan lahan memakai dataset Esri/ESA. Melatih ulang butuh GPU.
