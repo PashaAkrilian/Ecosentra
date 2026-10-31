@@ -79,7 +79,7 @@ export default function DashboardPage() {
         <StatTile
           label="Titik api (24 jam)"
           icon={Flame}
-          accent="bg-orange-100 text-orange-700"
+         
           isLoading={fires24h.isLoading}
           error={fires24h.error}
           onRetry={fires24h.reload}
@@ -94,7 +94,7 @@ export default function DashboardPage() {
         <StatTile
           label="Provinsi dengan titik api"
           icon={Sprout}
-          accent="bg-emerald-100 text-emerald-700"
+         
           isLoading={fires24h.isLoading}
           error={fires24h.error}
           onRetry={fires24h.reload}
@@ -104,7 +104,7 @@ export default function DashboardPage() {
         <StatTile
           label="Gempa M 5+ terbaru"
           icon={Activity}
-          accent="bg-violet-100 text-violet-700"
+         
           isLoading={quakes.isLoading}
           error={quakes.error}
           onRetry={quakes.reload}
@@ -114,7 +114,7 @@ export default function DashboardPage() {
         <StatTile
           label="Peringatan aktif"
           icon={TriangleAlert}
-          accent="bg-red-100 text-red-700"
+         
           isLoading={fires24h.isLoading || quakes.isLoading}
           error={fires24h.error && quakes.error ? "gagal" : null}
           onRetry={() => {
