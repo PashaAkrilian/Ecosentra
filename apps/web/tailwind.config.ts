@@ -10,6 +10,10 @@ const config: Config = {
         display: ["var(--font-display)", "var(--font-body)", "system-ui", "sans-serif"],
       },
       colors: {
+        emerald: {
+          50: "#F1F4EE", 100: "#E3EADF", 200: "#CFDCCB", 300: "#A9C2AF", 400: "#6E9A80",
+          500: "#438060", 600: "#3A7C5C", 700: "#2E6B4E", 800: "#245640", 900: "#1B4332", 950: "#18241C",
+        },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

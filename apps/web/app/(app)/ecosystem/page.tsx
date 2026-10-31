@@ -99,11 +99,11 @@ function EcosystemContent() {
       />
 
       <section aria-label={`Ringkasan ${province.name}`} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile label="Luas wilayah" icon={Ruler} accent="bg-slate-100 text-slate-700" value={`${formatNumber(areaKm2)} km²`} note={`Pulau/kawasan: ${province.island}`} />
+        <StatTile label="Luas wilayah" icon={Ruler} value={`${formatNumber(areaKm2)} km²`} note={`Pulau/kawasan: ${province.island}`} />
         <StatTile
           label="Pepohonan"
           icon={TreePine}
-          accent="bg-emerald-100 text-emerald-700"
+         
           isLoading={landcoverLoading}
           error={landcover.error}
           onRetry={landcover.reload}
@@ -113,7 +113,7 @@ function EcosystemContent() {
         <StatTile
           label="Tanaman pertanian"
           icon={Wheat}
-          accent="bg-amber-100 text-amber-700"
+         
           isLoading={landcoverLoading}
           error={landcover.error}
           onRetry={landcover.reload}
@@ -123,7 +123,7 @@ function EcosystemContent() {
         <StatTile
           label="Area terbangun"
           icon={Building2}
-          accent="bg-red-100 text-red-700"
+         
           isLoading={landcoverLoading}
           error={landcover.error}
           onRetry={landcover.reload}
