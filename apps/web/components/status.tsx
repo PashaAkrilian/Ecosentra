@@ -100,7 +100,6 @@ export function StatTile({
   error,
   onRetry,
   trend,
-  accent = "text-emerald-700 bg-emerald-100",
 }: {
   label: string
   icon: LucideIcon
@@ -110,13 +109,12 @@ export function StatTile({
   error?: string | null
   onRetry?: () => void
   trend?: ReactNode
-  accent?: string
 }) {
   return (
     <Card>
       <CardContent className="flex items-start justify-between gap-3 p-5">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
           {isLoading ? (
             <Skeleton className="mt-2 h-9 w-24" />
           ) : error ? (
@@ -130,15 +128,13 @@ export function StatTile({
             </div>
           ) : (
             <>
-              <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">{value}</p>
+              <p className="mt-1 font-display text-3xl font-semibold tracking-tight tabular-nums text-foreground">{value}</p>
               {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
             </>
           )}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <div className={cn("rounded-lg p-2", accent)} aria-hidden>
-            <Icon className="h-5 w-5" />
-          </div>
+          <Icon className="h-5 w-5 text-muted-foreground" aria-hidden />
           {!isLoading && !error && trend}
         </div>
       </CardContent>

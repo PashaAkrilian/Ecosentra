@@ -49,8 +49,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         onClick={onNavigate}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-          active ? "bg-emerald-700 text-white shadow-sm" : "text-emerald-950/80 hover:bg-emerald-100 hover:text-emerald-950",
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          active ? "bg-foreground text-background" : "text-foreground/75 hover:bg-secondary hover:text-foreground",
         )}
       >
         <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -64,7 +64,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
       <nav aria-label="Navigasi utama" className="space-y-1">
         {MAIN_NAV.map(renderItem)}
       </nav>
-      <nav aria-label="Navigasi tambahan" className="space-y-1 border-t border-emerald-900/10 pt-4">
+      <nav aria-label="Navigasi tambahan" className="space-y-1 border-t border-border pt-4">
         {SECONDARY_NAV.map(renderItem)}
       </nav>
     </div>
@@ -117,10 +117,10 @@ function UserBox({ onNavigate }: { onNavigate?: () => void }) {
 function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2.5" aria-label="EcoSentra — beranda">
-      <span className="rounded-lg bg-emerald-700 p-1.5 shadow-sm">
+      <span className="rounded-md bg-primary p-1.5">
         <Leaf className="h-5 w-5 text-white" aria-hidden />
       </span>
-      <span className="text-lg font-bold tracking-tight text-emerald-950">EcoSentra</span>
+      <span className="font-display text-lg font-semibold tracking-tight text-foreground">EcoSentra</span>
     </Link>
   )
 }
@@ -139,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           Lewati ke konten
         </a>
         {/* Sidebar desktop */}
-        <aside className="hidden w-64 shrink-0 flex-col gap-6 border-r border-emerald-900/10 bg-emerald-50/70 p-4 lg:sticky lg:top-0 lg:flex lg:h-screen">
+        <aside className="hidden w-64 shrink-0 flex-col gap-6 border-r border-border bg-card p-4 lg:sticky lg:top-0 lg:flex lg:h-screen">
           <div className="px-2 pt-2">
             <Brand />
           </div>
@@ -148,7 +148,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </aside>
 
         {/* Top bar mobile */}
-        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-emerald-900/10 bg-emerald-50/95 px-4 py-3 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card/95 px-4 py-3 backdrop-blur lg:hidden">
           <Brand />
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
@@ -156,7 +156,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Menu aria-hidden />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex w-72 flex-col gap-6 bg-emerald-50 p-4">
+            <SheetContent side="left" className="flex w-72 flex-col gap-6 bg-card p-4">
               <SheetTitle className="px-2 pt-2">
                 <Brand />
               </SheetTitle>
