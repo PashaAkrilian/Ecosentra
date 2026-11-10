@@ -33,7 +33,8 @@ const WIB_OFFSET_MS = 7 * 60 * 60 * 1000
 
 function satelliteKey(): SatelliteKey {
   const key = process.env.FIRMS_SATELLITE as SatelliteKey | undefined
-  return key && key in SATELLITES ? key : "snpp"
+  // snpp tetap bisa dipilih, tapi file FIRMS-nya kosong (dicek 2026-11-10), jadi bawaan NOAA-20.
+  return key && key in SATELLITES ? key : "noaa20"
 }
 
 export function firmsCsvUrl(range: HotspotRange, satellite: SatelliteKey = satelliteKey()): string {
