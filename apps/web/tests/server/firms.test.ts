@@ -106,7 +106,7 @@ describe("getHotspotDataset", () => {
     const second = await getHotspotDataset("24h")
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock.mock.calls[0]![0]).toContain("SUOMI_VIIRS_C2_SouthEast_Asia_24h.csv")
+    expect(fetchMock.mock.calls[0]![0]).toContain("J1_VIIRS_C2_SouthEast_Asia_24h.csv")
     expect(first.hotspots).toHaveLength(5)
     expect(second).toBe(first)
   })
