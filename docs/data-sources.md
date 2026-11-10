@@ -8,7 +8,7 @@ aplikasinya.
 
 | Sumber | Dipakai untuk | Pembaruan | Lisensi / syarat | Catatan teknis |
 |---|---|---|---|---|
-| [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/active_fire/) — VIIRS 375 m | titik api (peta, dashboard, peringatan, ekspor) | ±3 jam | data NASA terbuka; cantumkan NASA FIRMS | CSV publik per wilayah (`SouthEast_Asia_{24h,48h,7d}`), **tanpa MAP_KEY**. Satelit dipilih lewat `FIRMS_SATELLITE` (`snpp`, `noaa20`, `noaa21`) |
+| [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/active_fire/) — VIIRS 375 m | titik api (peta, dashboard, peringatan, ekspor) | ±3 jam | data NASA terbuka; cantumkan NASA FIRMS | CSV publik per wilayah (`SouthEast_Asia_{24h,48h,7d}`), **tanpa MAP_KEY**. Satelit dipilih lewat `FIRMS_SATELLITE` (`noaa20` bawaan, `noaa21`, `snpp`; file `snpp` kosong per 2026-11-10) |
 | [BMKG Data Terbuka](https://data.bmkg.go.id/gempabumi/) | gempa M 5+ & dirasakan | menit | **wajib mencantumkan BMKG sebagai sumber** | `autogempa`, `gempaterkini`, `gempadirasakan` (JSON) |
 | [Esri / Impact Observatory 10 m LULC](https://livingatlas.arcgis.com/landcover/) | tutupan lahan (titik & provinsi), layer peta | tahunan | CC BY 4.0 | ImageServer publik: `computeHistograms` (analisis) & `exportImage` (tile) |
 | [ESA WorldCover v200](https://esa-worldcover.org/) via Google Earth Engine | alternatif tutupan lahan (`services/geo`, opsional) | snapshot 2021 | CC BY 4.0; penggunaan GEE tunduk pada syarat Google | butuh service account GEE |
