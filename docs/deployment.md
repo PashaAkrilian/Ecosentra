@@ -159,6 +159,18 @@ Catatan penting:
 - Tidak perlu mendaftarkan domain di Cognito: browser memanggilnya langsung lewat
   `cognito-idp.<region>.amazonaws.com` (sudah diizinkan di CSP).
 
+### Contoh nyata: EC2 `t3.nano` tanpa SSH (diuji di AWS)
+
+Skrip penyiapan: [`infra/ec2-user-data.sh`](../infra/ec2-user-data.sh). Urutannya: build image di mesin lokal, push ke ECR,
+lalu buat instance dengan role IAM minimal, IMDS hop limit 2, security group hanya 80/443, dan skrip itu sebagai user-data.
+Akses/diagnosis lewat **Session Manager** (tanpa membuka port SSH). Hal yang dipelajari saat mengujinya:
+
+- **Buat swap sebelum `dnf install`**: dengan RAM 0,5 GB, `dnf` dimatikan OOM saat memuat metadata repository.
+- **Build image tidak di instance** (OOM); build lokal lalu push ke ECR.
+- `HttpPutResponseHopLimit=2` wajib, kalau tidak container tidak bisa memakai role instance (IMDS hanya 1 hop).
+- Hasil uji: 23/23 skenario API ujung-ke-ujung lulus, batas laju tidak bisa dibypass dengan `X-Forwarded-For` palsu, dan
+  memori ±256 dari 415 MB terpakai (container `web` ±61 MB).
+
 ### Platform lain
 
 `next build && node .next/standalone/server.js` dengan Node ≥ 22.12 (salin `.next/static` ke
