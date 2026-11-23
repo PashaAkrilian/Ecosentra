@@ -20,21 +20,27 @@ import { profileInputSchema } from "@/lib/schemas"
 
 interface Health {
   status: string
-  integrations: { firebaseAdmin: boolean; firebaseAuthClient: boolean; geoService: boolean; llm: boolean }
+  integrations: { auth: boolean; authClient: boolean; database: boolean; geoService: boolean; llm: boolean }
 }
 
 const INTEGRATIONS: { key: keyof Health["integrations"]; title: string; on: string; off: string }[] = [
   {
-    key: "firebaseAuthClient",
-    title: "Login (Firebase Auth)",
+    key: "authClient",
+    title: "Login di browser (Amazon Cognito)",
     on: "Pengunjung dapat mendaftar dan masuk.",
-    off: "Mode demo: tanpa login. Isi NEXT_PUBLIC_FIREBASE_* untuk mengaktifkan.",
+    off: "Mode demo: tanpa login. Isi NEXT_PUBLIC_COGNITO_REGION dan NEXT_PUBLIC_COGNITO_CLIENT_ID.",
   },
   {
-    key: "firebaseAdmin",
-    title: "Penyimpanan data (Firestore)",
+    key: "auth",
+    title: "Verifikasi login di server (Cognito)",
+    on: "Server memeriksa token login sebelum memberi akses ke data pribadi.",
+    off: "Data pribadi tidak bisa diakses. Isi COGNITO_USER_POOL_ID dan COGNITO_CLIENT_ID.",
+  },
+  {
+    key: "database",
+    title: "Penyimpanan data (Amazon DynamoDB)",
     on: "Lahan, riwayat analisis, skenario, dan peringatan admin tersimpan.",
-    off: "Data pribadi tidak disimpan. Isi FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY.",
+    off: "Data pribadi tidak disimpan. Isi DYNAMODB_TABLE (dan kredensial AWS).",
   },
   {
     key: "geoService",

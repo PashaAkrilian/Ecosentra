@@ -1,29 +1,22 @@
 "use client"
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
-import {
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  updateProfile,
-  type User,
-} from "firebase/auth"
-import { getClientAuth, isFirebaseClientConfigured } from "@/lib/firebaseClient"
+import * as cognito from "@/lib/cognitoClient"
+import type { SessionUser } from "@/lib/cognitoClient"
 
 interface AuthContextValue {
-  /** false = env Firebase client belum diisi -> mode demo tanpa login. */
+  /** false = env Cognito client belum diisi -> mode demo tanpa login. */
   configured: boolean
-  user: User | null
+  user: SessionUser | null
   /** true sampai status login awal diketahui. */
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (name: string, email: string, password: string) => Promise<void>
-  signInWithGoogle: () => Promise<void>
-  resetPassword: (email: string) => Promise<void>
+  /** `confirmed: false` = kode verifikasi sudah dikirim ke email dan harus dimasukkan lewat `confirmSignUp`. */
+  signUp: (name: string, email: string, password: string) => Promise<{ confirmed: boolean }>
+  confirmSignUp: (email: string, code: string) => Promise<void>
+  resendCode: (email: string) => Promise<void>
+  startPasswordReset: (email: string) => Promise<void>
+  finishPasswordReset: (email: string, code: string, newPassword: string) => Promise<void>
   signOut: () => Promise<void>
   /** ID token untuk header Authorization ke API routes, atau null kalau belum login. */
   getIdToken: () => Promise<string | null>
@@ -31,51 +24,38 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function requireAuth() {
-  const auth = getClientAuth()
-  if (!auth) throw new Error("Login belum dikonfigurasi (Firebase client env kosong).")
-  return auth
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(isFirebaseClientConfigured)
+  const [user, setUser] = useState<SessionUser | null>(null)
+  const [loading, setLoading] = useState(cognito.isAuthClientConfigured)
 
   useEffect(() => {
-    const auth = getClientAuth()
-    if (!auth) return
-    return onAuthStateChanged(auth, (next) => {
-      setUser(next)
-      setLoading(false)
-    })
+    if (!cognito.isAuthClientConfigured) return
+    setUser(cognito.currentUser())
+    setLoading(false)
+    return cognito.onSessionChange(() => setUser(cognito.currentUser()))
   }, [])
 
   const getIdToken = useCallback(async () => {
-    const current = getClientAuth()?.currentUser
-    return current ? current.getIdToken() : null
+    const token = await cognito.getIdToken()
+    if (!token) setUser(null) // sesi habis di server: tampilan ikut keluar
+    return token
   }, [])
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      configured: isFirebaseClientConfigured,
+      configured: cognito.isAuthClientConfigured,
       user,
       loading,
       getIdToken,
-      signIn: async (email, password) => {
-        await signInWithEmailAndPassword(requireAuth(), email, password)
-      },
-      signUp: async (name, email, password) => {
-        const credential = await createUserWithEmailAndPassword(requireAuth(), email, password)
-        if (name) await updateProfile(credential.user, { displayName: name })
-      },
-      signInWithGoogle: async () => {
-        await signInWithPopup(requireAuth(), new GoogleAuthProvider())
-      },
-      resetPassword: async (email) => {
-        await sendPasswordResetEmail(requireAuth(), email)
-      },
+      signIn: async (email, password) => setUser(await cognito.signIn(email, password)),
+      signUp: cognito.signUp,
+      confirmSignUp: cognito.confirmSignUp,
+      resendCode: cognito.resendCode,
+      startPasswordReset: cognito.startPasswordReset,
+      finishPasswordReset: cognito.finishPasswordReset,
       signOut: async () => {
-        await firebaseSignOut(requireAuth())
+        await cognito.signOut()
+        setUser(null)
       },
     }),
     [user, loading, getIdToken],
@@ -90,19 +70,25 @@ export function useAuth(): AuthContextValue {
   return context
 }
 
-/** Pesan error Firebase Auth yang ramah pengguna (Bahasa Indonesia). */
+/** Pesan error Cognito yang ramah pengguna (Bahasa Indonesia), dipetakan dari nama pengecualiannya. */
 export function describeAuthError(error: unknown): string {
-  const code = (error as { code?: string })?.code ?? ""
+  const name = (error as { name?: string })?.name ?? ""
   const messages: Record<string, string> = {
-    "auth/invalid-credential": "Email atau kata sandi salah.",
-    "auth/invalid-email": "Format email tidak valid.",
-    "auth/user-not-found": "Akun dengan email ini tidak ditemukan.",
-    "auth/wrong-password": "Email atau kata sandi salah.",
-    "auth/email-already-in-use": "Email ini sudah terdaftar. Silakan masuk.",
-    "auth/weak-password": "Kata sandi minimal 6 karakter.",
-    "auth/too-many-requests": "Terlalu banyak percobaan. Coba lagi beberapa saat lagi.",
-    "auth/popup-closed-by-user": "Jendela login ditutup sebelum selesai.",
-    "auth/network-request-failed": "Gagal terhubung ke server login. Periksa koneksi internet.",
+    NotAuthorizedException: "Email atau kata sandi salah.",
+    UserNotFoundException: "Email atau kata sandi salah.",
+    UserNotConfirmedException: "Akun belum dikonfirmasi. Masukkan kode verifikasi yang dikirim ke email Anda.",
+    UsernameExistsException: "Email ini sudah terdaftar. Silakan masuk.",
+    InvalidPasswordException: "Kata sandi belum memenuhi syarat (minimal 8 karakter, huruf besar, huruf kecil, dan angka).",
+    InvalidParameterException: "Data yang dimasukkan tidak valid. Periksa email dan kata sandi.",
+    CodeMismatchException: "Kode verifikasi salah.",
+    ExpiredCodeException: "Kode verifikasi sudah kedaluwarsa. Minta kode baru.",
+    LimitExceededException: "Terlalu banyak percobaan. Coba lagi beberapa saat lagi.",
+    TooManyRequestsException: "Terlalu banyak percobaan. Coba lagi beberapa saat lagi.",
+    TooManyFailedAttemptsException: "Terlalu banyak percobaan. Coba lagi beberapa saat lagi.",
+    NetworkError: "Gagal terhubung ke server login. Periksa koneksi internet.",
+    TypeError: "Gagal terhubung ke server login. Periksa koneksi internet.",
   }
-  return messages[code] ?? (error instanceof Error ? error.message : "Terjadi kesalahan saat login.")
+  if (messages[name]) return messages[name]
+  // Error buatan sendiri (nama "Error") sudah berbahasa Indonesia; pengecualian SDK yang tak dikenal dirangkum.
+  return error instanceof Error && name === "Error" ? error.message : "Terjadi kesalahan saat login. Coba lagi."
 }

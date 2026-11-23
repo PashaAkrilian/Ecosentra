@@ -1,0 +1,40 @@
+# Menjalankan EcoSentra di satu server (mis. EC2): aplikasi web + Caddy (HTTPS otomatis).
+#
+#   cp apps/web/.env.local.example apps/web/.env.production   # lalu isi nilainya
+#   SITE_ADDRESS=ecosentra.site docker compose up -d --build
+#
+# Hanya Caddy yang membuka port ke luar. `web` sengaja TANPA `ports:` — batas laju membaca IP klien dari
+# X-Forwarded-For yang ditulis ulang Caddy; kalau `web` terbuka langsung, header itu bisa dipalsukan.
+services:
+  web:
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_COGNITO_REGION: ${NEXT_PUBLIC_COGNITO_REGION:-}
+        NEXT_PUBLIC_COGNITO_CLIENT_ID: ${NEXT_PUBLIC_COGNITO_CLIENT_ID:-}
+    env_file:
+      - ./apps/web/.env.production
+    restart: unless-stopped
+    expose:
+      - "8080"
+    # Batas memori supaya satu proses tidak menghabiskan instance kecil.
+    mem_limit: 450m
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # sertifikat HTTPS; hilang = diterbitkan ulang (ada batas percobaan Let's Encrypt)
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

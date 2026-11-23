@@ -1,0 +1,12 @@
+# Reverse proxy + HTTPS otomatis (Let's Encrypt) untuk container `web`.
+# SITE_ADDRESS = domain publik (mis. ecosentra.site); "localhost" untuk uji lokal.
+# Domain harus sudah menunjuk ke IP server sebelum sertifikat bisa diterbitkan.
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	reverse_proxy web:8080 {
+		# Caddy tidak memercayai X-Forwarded-For dari klien (bawaan): header ditimpa dengan IP koneksi sebenarnya,
+		# dan itulah yang dipakai server/http.ts#getClientIp untuk batas laju.
+		header_up X-Forwarded-For {remote_host}
+	}
+}

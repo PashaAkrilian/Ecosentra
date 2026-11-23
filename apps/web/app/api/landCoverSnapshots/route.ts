@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { LandCoverSnapshot } from "@/lib/data/types"
 import { requireUser } from "@/server/auth"
-import { listOwned } from "@/server/firestore"
+import { listOwned } from "@/server/store"
 import { handleRoute, HttpError } from "@/server/http"
 
 export async function GET(request: Request) {

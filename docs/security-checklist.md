@@ -7,19 +7,19 @@ audit fondasi (Fase 2) supaya jejaknya tidak hilang.
 
 | Aset | Ancaman | Kontrol utama |
 |---|---|---|
-| Data pribadi pengguna (lahan, skenario, profil) | pengguna lain / anonim membaca atau mengubah | semua akses lewat API + Admin SDK; ID token Firebase diverifikasi; setiap dokumen punya `userId`; dokumen milik orang lain → `404`; `firestore.rules` menolak akses klien langsung |
+| Data pribadi pengguna (lahan, skenario, profil) | pengguna lain / anonim membaca atau mengubah | semua akses lewat API; ID token Cognito diverifikasi (JWKS, penerbit, audiens); kunci DynamoDB selalu `USER#<sub dari token>` sehingga data orang lain tidak mungkin terbaca → `404`; browser tidak punya kredensial AWS |
 | Peran admin | pengguna menaikkan dirinya jadi admin | admin = custom claim di ID token (hanya bisa di-set dengan Admin SDK); tidak pernah dibaca dari dokumen yang bisa ditulis user; `PUT /api/profile` menolak field `isAdmin` |
 | Kuota/biaya layanan berbayar (Claude, Earth Engine) | penyalahgunaan oleh anonim | LandAI mode Claude hanya untuk user login (+ batas 8/mnt/IP & 150/hari/user); `services/geo` mendukung `GEO_API_KEY`; rate limit di endpoint yang memanggil layanan eksternal |
 | Layanan data eksternal (NASA, Esri, ORNL, Open-Meteo) | dibanjiri lewat server kita | cache server, rate limit per IP, validasi parameter ketat (koordinat Indonesia, buffer 100–50.000 m) |
-| Kredensial (service account Firebase/GEE, kunci API) | bocor lewat repo/log/klien | `.gitignore` berlapis; hanya `.env.example` (tanpa nilai) di repo; modul `server/` ber-`server-only` (build gagal bila terimpor klien); error SDK tidak di-log utuh |
+| Kredensial (service account GEE, kunci API; kredensial AWS server berasal dari role IAM, bukan file) | bocor lewat repo/log/klien | `.gitignore` berlapis; hanya `.env.example` (tanpa nilai) di repo; modul `server/` ber-`server-only` (build gagal bila terimpor klien); error SDK tidak di-log utuh |
 | Integritas tampilan (XSS) | konten eksternal (nama wilayah BMKG, jawaban model) disisipkan sebagai HTML | popup peta dibangun dengan DOM + `textContent`; renderer Markdown LandAI murni elemen React (tanpa `innerHTML`); CSP |
 
 ## Checklist
 
 ### Sudah dilakukan
 
-- [x] **Autentikasi & otorisasi API** — `server/auth.ts` (Bearer ID token), `server/firestore.ts` (kepemilikan), admin via custom claim. Diuji (`tests/api/*`): 401 tanpa/ salah token, 404 untuk data user lain, 403 non-admin, isolasi antar-user, hapus akun hanya menghapus data sendiri.
-- [x] **Firestore Security Rules di-version-control** — `firestore.rules` (tolak semua akses klien) + `firebase.json` menunjuk ke sana.
+- [x] **Autentikasi & otorisasi API** — `server/auth.ts` + `server/cognito.ts` (Bearer ID token), `server/store.ts` (kepemilikan lewat kunci), admin via grup Cognito `admin`. Diuji (`tests/api/*`): 401 tanpa/ salah token, 404 untuk data user lain, 403 non-admin, isolasi antar-user, hapus akun hanya menghapus data sendiri.
+- [x] **Tidak ada akses data langsung dari browser** — browser hanya memanggil Cognito untuk login; data lewat API. Kredensial AWS tidak pernah dikirim ke klien (role IAM instance, kebijakan minimal di `docs/deployment.md`).
 - [x] **Validasi input per koleksi** — skema Zod `.strict()` di `lib/schemas.ts` (field tak dikenal ditolak, field server `id/userId/createdAt` tak bisa dikirim, koordinat wajib di Indonesia, batas ukuran body 100 KB).
 - [x] **Rate limiting** — ekspor (10/mnt), cuaca (30/mnt), NDVI (10/mnt), tutupan lahan (10/mnt), profil ekosistem (20/mnt), analisis lahan (10/mnt), chat (20/mnt; Claude 8/mnt + 150/hari/user), per IP; `services/geo` 10/mnt via slowapi.
 - [x] **Header keamanan & CSP** — `next.config.mjs`: `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`; `poweredByHeader` mati.
@@ -36,8 +36,8 @@ audit fondasi (Fase 2) supaya jejaknya tidak hilang.
 ### Belum / perlu keputusan pemilik
 
 - [ ] **Riwayat Git masih memuat kredensial lama** (kunci Firebase Admin & API key pada 2 commit awal, Agustus 2025; repo **publik**). Sudah dirotasi sehingga tidak lagi berbahaya, tetapi tetap ada di riwayat. Pembersihan (`git filter-repo`/BFG + force-push semua branch + koordinasi kolaborator) sengaja ditunda — keputusan yang harus diambil pemilik repo.
-- [ ] **Verifikasi langsung ke Firebase sungguhan.** Jalur Auth/Firestore diuji dengan Firestore & Auth palsu di memori (logika kepemilikan, validasi, status HTTP). Uji dengan proyek/emulator Firebase nyata belum dijalankan di lingkungan pengembangan ini — lakukan satu putaran manual setelah mengisi kredensial (daftar → tambah lahan → analisis → hapus akun) dan pastikan `firestore.rules` ter-deploy (`firebase deploy --only firestore:rules`).
-- [ ] **Verifikasi email & MFA** tidak diwajibkan (opsional di Firebase Auth).
+- [ ] **Verifikasi langsung ke AWS sungguhan.** Jalur Cognito/DynamoDB diuji dengan klien palsu, emulator Moto (integrasi + ujung-ke-ujung lewat Chrome), dan verifikasi JWT dengan kunci sungguhan. Sudah dijalankan terhadap Cognito + DynamoDB nyata lewat skrip API (23/23) dan preflight CORS asli. Masih perlu: satu putaran manual di browser dengan kode email asli, dan uji dengan kebijakan IAM minimal (bukan role admin).
+- [ ] **MFA** tidak diaktifkan (opsional di Cognito). Verifikasi email diwajibkan lewat kode. ID token disimpan di `localStorage` (terbaca skrip di halaman jika ada XSS; CSP ketat mengurangi risiko) — pertimbangkan cookie httpOnly bila ancamannya naik. Token yang masih sah tetap diterima server sampai kedaluwarsa (≤ 1 jam) walau akun sudah dihapus.
 - [ ] **CSP masih memakai `'unsafe-inline'` untuk script** (dibutuhkan skrip hidrasi Next.js tanpa nonce). CSP berbasis nonce adalah peningkatan lanjutan.
 - [ ] **Rate limiter & cache per-instance tanpa Redis.** Isi `UPSTASH_REDIS_REST_URL`/`TOKEN` agar berlaku lintas instance (lihat ADR-0001). Limiter memakai header IP (`x-vercel-forwarded-for`/`x-forwarded-for`): aman di Vercel, tetapi di host lain harus di belakang proxy yang menimpa header itu.
 - [ ] **Temuan `npm audit` yang tersisa (8: 3 moderate, 5 high)** — semuanya transitif dan tanpa perbaikan upstream yang kompatibel: `postcss` bawaan Next (hanya dipakai saat build), `@grpc/grpc-js` di SDK Firestore klien (tidak dipakai — klien hanya memakai Auth), `uuid` di `@google-cloud/storage`. Pantau lewat Dependabot.

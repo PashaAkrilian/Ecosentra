@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { Scenario } from "@/lib/data/types"
 import { scenarioUpdateSchema } from "@/lib/schemas"
 import { requireUser } from "@/server/auth"
-import { deleteOwned, updateOwned } from "@/server/firestore"
+import { deleteOwned, updateOwned } from "@/server/store"
 import { handleRoute, readJsonBody } from "@/server/http"
 
 type Params = { params: Promise<{ id: string }> }
