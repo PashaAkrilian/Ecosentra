@@ -1,22 +1,25 @@
 import "server-only"
-import { FirebaseNotConfiguredError, getAdminAuth } from "@/server/firebaseAdmin"
+import { AwsNotConfiguredError, isAuthConfigured } from "@/server/aws"
+import { verifyIdToken } from "@/server/cognito"
 import { HttpError } from "@/server/http"
 
 export interface AuthUser {
   uid: string
   email: string | null
-  /** Nama tampilan dari akun login (klaim `name` di ID token), bila ada. */
+  /** Nama tampilan dari akun login (atribut `name` di ID token), bila ada. */
   name: string | null
+  /** Nama pengguna Cognito, untuk menghapus akun. */
+  username: string
   isAdmin: boolean
 }
 
 /**
- * Verifikasi Firebase ID token dari header `Authorization: Bearer <token>`.
- * Klien mendapat token ini dari Firebase Auth (lihat components/auth-provider.tsx)
- * dan mengirimnya lewat lib/api-client.ts.
+ * Verifikasi ID token Cognito dari header `Authorization: Bearer <token>`.
+ * Klien mendapat token ini dari Cognito (lihat components/auth-provider.tsx) dan
+ * mengirimnya lewat lib/api-client.ts.
  *
- * Admin ditandai lewat custom claim `admin: true` — di-set manual memakai
- * Admin SDK (lihat docs/security-checklist.md), tidak bisa di-set user sendiri.
+ * Admin = anggota grup Cognito `admin`. Grup hanya bisa diubah lewat konsol/CLI AWS
+ * oleh pemilik akun, tidak oleh pengguna sendiri.
  */
 export async function requireUser(request: Request): Promise<AuthUser> {
   const header = request.headers.get("authorization")
@@ -24,19 +27,19 @@ export async function requireUser(request: Request): Promise<AuthUser> {
   if (!match) {
     throw new HttpError(401, "Login diperlukan untuk mengakses data ini.")
   }
-
-  const auth = getAdminAuth() // lempar FirebaseNotConfiguredError kalau belum dikonfigurasi
+  if (!isAuthConfigured()) throw new AwsNotConfiguredError()
 
   try {
-    const decoded = await auth.verifyIdToken(match[1]!)
+    const claims = await verifyIdToken(match[1]!)
     return {
-      uid: decoded.uid,
-      email: decoded.email ?? null,
-      name: typeof decoded.name === "string" && decoded.name ? decoded.name : null,
-      isAdmin: decoded.admin === true,
+      uid: claims.sub,
+      email: claims.email,
+      name: claims.name,
+      username: claims.username,
+      isAdmin: claims.groups.includes("admin"),
     }
   } catch (error) {
-    if (error instanceof FirebaseNotConfiguredError) throw error
+    if (error instanceof AwsNotConfiguredError) throw error
     throw new HttpError(401, "Sesi tidak valid atau sudah kedaluwarsa. Silakan login ulang.")
   }
 }

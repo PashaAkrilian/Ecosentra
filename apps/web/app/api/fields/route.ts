@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { Field } from "@/lib/data/types"
 import { fieldInputSchema } from "@/lib/schemas"
 import { requireUser } from "@/server/auth"
-import { createOwned, listOwned } from "@/server/firestore"
+import { createOwned, listOwned } from "@/server/store"
 import { handleRoute, readJsonBody } from "@/server/http"
 
 export async function GET(request: Request) {

@@ -1,7 +1,7 @@
 import "server-only"
 import { NextResponse } from "next/server"
 import { ZodError } from "zod"
-import { FirebaseNotConfiguredError } from "@/server/firebaseAdmin"
+import { AwsNotConfiguredError } from "@/server/aws"
 
 /** Error dengan status HTTP eksplisit — dilempar dari helper/route, ditangkap oleh `handleRoute`. */
 export class HttpError extends Error {
@@ -35,7 +35,7 @@ export async function handleRoute(handler: () => Promise<Response>): Promise<Res
     if (error instanceof ZodError) {
       return jsonError(400, formatZodError(error))
     }
-    if (error instanceof FirebaseNotConfiguredError) {
+    if (error instanceof AwsNotConfiguredError) {
       return jsonError(503, error.message)
     }
     console.error("Unhandled API error:", error instanceof Error ? error.message : error)

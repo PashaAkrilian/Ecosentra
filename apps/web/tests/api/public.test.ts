@@ -2,9 +2,10 @@ import { readFileSync } from "node:fs"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { clearCache } from "@/server/cache"
 import { resetRateLimits } from "@/server/rateLimit"
-import { apiRequest, fakeDb, firebaseState } from "../helpers/fakeFirebase"
+import { apiRequest, fakeTable, awsState } from "../helpers/fakeAws"
 
-vi.mock("@/server/firebaseAdmin", async () => (await import("../helpers/fakeFirebase")).fakeFirebaseAdminModule())
+vi.mock("@/server/aws", async () => (await import("../helpers/fakeAws")).fakeAwsModule())
+vi.mock("@/server/cognito", async () => (await import("../helpers/fakeAws")).fakeCognitoModule())
 
 const hotspotsRoute = await import("@/app/api/hotspots/route")
 const summaryRoute = await import("@/app/api/hotspots/summary/route")
@@ -16,8 +17,8 @@ const healthRoute = await import("@/app/api/healthcheck/route")
 const firmsCsv = readFileSync(new URL("../fixtures/firms-sample.csv", import.meta.url), "utf8")
 
 beforeEach(() => {
-  fakeDb.reset()
-  firebaseState.configured = true
+  fakeTable.reset()
+  awsState.configured = true
   vi.stubGlobal("fetch", vi.fn(async () => new Response(firmsCsv)))
 })
 
@@ -133,8 +134,8 @@ describe("/api/alerts", () => {
     expect(list.alerts[0]).not.toHaveProperty("createdBy")
   })
 
-  it("tetap 200 dengan daftar kosong kalau Firebase belum dikonfigurasi", async () => {
-    firebaseState.configured = false
+  it("tetap 200 dengan daftar kosong kalau belum dikonfigurasi", async () => {
+    awsState.configured = false
     const res = await alertsRoute.GET()
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ configured: false, alerts: [] })

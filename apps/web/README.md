@@ -17,11 +17,11 @@ npm run dev          # http://localhost:8080 (mode demo, tanpa kredensial)
 | `npm run lint` | `next lint` (ESLint `next/core-web-vitals`) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest (tests/server, api, assistant, lib) — tanpa internet, memakai fixture |
-| `npm run test:emulator` | uji integrasi dengan Admin SDK asli; butuh Firebase Emulator (lihat di bawah) |
+| `npm run test:emulator` | uji integrasi lapisan data terhadap DynamoDB (emulator Moto; lihat di bawah) |
 | `npm run seed -- <uid> [--admin]` | data contoh untuk satu akun (+ peran admin) |
 
 Variabel lingkungan: semua **opsional**, dijelaskan di [`.env.local.example`](./.env.local.example).
-Node ≥ 22.12 (dibutuhkan firebase-admin 14).
+Node ≥ 22.12.
 
 ## Struktur
 
@@ -39,9 +39,9 @@ hooks/                   use-api (fetch + state), use-hotspots, use-location-dat
 lib/                     aman dipakai klien: tipe (data/types.ts), skema Zod, format, geo,
                          alerts, recommendations, ndvi, provinces, map/layers
 server/                  HANYA server (`import "server-only"`): sources/, geo/, assistant/,
-                         auth, firestore, cache, rateLimit, http, firebaseAdmin
+                         auth, cognito, store (DynamoDB), aws, cache, rateLimit, http
 tests/                   Vitest + fixture respons penyedia data asli
-scripts/                 seedFirestore.mjs, geo/build_provinces.py
+scripts/                 geo/build_provinces.py
 instrumentation*.ts      pengaturan jaringan Node + pemanasan cache saat server start
 ```
 
@@ -51,7 +51,7 @@ instrumentation*.ts      pengaturan jaringan Node + pemanasan cache saat server 
   kalau sumber gagal, tampilkan `ErrorState` dengan tombol coba-lagi.
 - Setiap tampilan data memakai `SourceNote` (sumber + waktu pengambilan).
 - API route: bungkus dengan `handleRoute`, validasi input dengan skema di `lib/schemas.ts`,
-  data milik user lewat helper `server/firestore.ts` (selalu ber-scope `uid`).
+  data milik user lewat helper `server/store.ts` (kunci DynamoDB selalu memuat `uid`).
 - Konten dari luar (BMKG, model bahasa) tidak boleh masuk lewat `innerHTML` — pakai
   `textContent` / elemen React.
 - Warna grafik: satu warna per entitas (`components/charts/chart-utils.tsx`); teks tidak
@@ -63,14 +63,12 @@ instrumentation*.ts      pengaturan jaringan Node + pemanasan cache saat server 
 `server/geo/indonesia-provinces.json` dan `lib/province-meta.json` dihasilkan oleh
 `scripts/geo/build_provinces.py` dari geoBoundaries (instruksi di kepala file skrip).
 
-## Pengembangan dengan Firebase Emulator
+## Pengembangan dengan emulator AWS
 
-Tanpa project Firebase sungguhan: lihat bagian "Emulator" di
-[`../../docs/deployment.md`](../../docs/deployment.md). Uji integrasi:
+Tanpa akun AWS: Cognito dan DynamoDB bisa ditiru dengan Moto. Lihat bagian 2.5 di
+[`docs/deployment.md`](../../docs/deployment.md). Uji integrasi lapisan data:
 
 ```bash
-# dari root repo
-npx firebase-tools emulators:exec --config firebase.emulators.json \
-  --only auth,firestore --project demo-ecosentra \
-  "FIREBASE_PROJECT_ID=demo-ecosentra npm run test:emulator --prefix apps/web"
+pip install 'moto[server]' && moto_server -p 5555
+DYNAMODB_ENDPOINT=http://127.0.0.1:5555 npm run test:emulator
 ```

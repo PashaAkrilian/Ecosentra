@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import type { Field, LandCoverSnapshot } from "@/lib/data/types"
 import { requireUser } from "@/server/auth"
-import { createOwned, getOwnedSnapshot, serializeDoc } from "@/server/firestore"
 import { handleRoute } from "@/server/http"
+import { createOwned, getOwned, updateOwned } from "@/server/store"
 import { enforceRateLimit } from "@/server/rateLimit"
 import { bufferForArea } from "@/lib/geo"
 import { analyzeLandCover } from "@/server/sources/landcover"
@@ -19,8 +19,7 @@ export async function POST(request: Request, { params }: Params) {
     const user = await requireUser(request)
     await enforceRateLimit(request, "field-analyze", 10, 60_000)
 
-    const fieldDoc = await getOwnedSnapshot("fields", (await params).id, user.uid)
-    const field = serializeDoc<Field>(fieldDoc)
+    const field = await getOwned<Field>("fields", (await params).id, user.uid)
     const result = await analyzeLandCover(field.location.lat, field.location.lng, bufferForArea(field.areaHa))
 
     const { source, ...analysis } = result
@@ -31,7 +30,7 @@ export async function POST(request: Request, { params }: Params) {
       year: source.year,
     })
 
-    await fieldDoc.ref.update({
+    await updateOwned("fields", field.id, user.uid, {
       lastAnalysis: {
         dominantClass: result.dominantClass,
         dataset: `${source.dataset} (${source.year})`,

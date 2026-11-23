@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { apiRequest, fakeAuth, fakeDb, firebaseState, params } from "../helpers/fakeFirebase"
+import { apiRequest, fakeCognito, fakeTable, awsState, params } from "../helpers/fakeAws"
 
-vi.mock("@/server/firebaseAdmin", async () => (await import("../helpers/fakeFirebase")).fakeFirebaseAdminModule())
+vi.mock("@/server/aws", async () => (await import("../helpers/fakeAws")).fakeAwsModule())
+vi.mock("@/server/cognito", async () => (await import("../helpers/fakeAws")).fakeCognitoModule())
 vi.mock("@/server/sources/landcover", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/server/sources/landcover")>()),
   analyzeLandCover: vi.fn(async (lat: number, lng: number, bufferMeters: number) => ({
@@ -45,9 +46,9 @@ async function createField(token = "token-alice", body: object = validField) {
 }
 
 beforeEach(() => {
-  fakeDb.reset()
-  fakeAuth.deletedUids.length = 0
-  firebaseState.configured = true
+  fakeTable.reset()
+  fakeCognito.deletedUsernames.length = 0
+  awsState.configured = true
 })
 
 describe("autentikasi", () => {
@@ -62,8 +63,8 @@ describe("autentikasi", () => {
     expect(res.status).toBe(401)
   })
 
-  it("mengembalikan 503 kalau Firebase belum dikonfigurasi", async () => {
-    firebaseState.configured = false
+  it("mengembalikan 503 kalau belum dikonfigurasi", async () => {
+    awsState.configured = false
     const res = await fieldsRoute.GET(apiRequest("/api/fields", { token: "token-alice" }))
     expect(res.status).toBe(503)
     expect((await res.json()).error).toMatch(/belum dikonfigurasi/)
@@ -108,7 +109,7 @@ describe("/api/fields", () => {
         .status,
     ).toBe(404)
     expect((await fieldRoute.DELETE(apiRequest(`/api/fields/${id}`, { ...asBob, method: "DELETE" }), params({ id }))).status).toBe(404)
-    expect(fakeDb.store("fields").has(id)).toBe(true)
+    expect(fakeTable.ownedSortKeys("fields")).toHaveLength(1)
   })
 
   it("menganalisis tutupan lahan, menyimpan snapshot, lalu menghapus semuanya bersama lahan", async () => {
@@ -139,7 +140,7 @@ describe("/api/fields", () => {
 
     const del = await fieldRoute.DELETE(apiRequest(`/api/fields/${id}`, { token: "token-alice", method: "DELETE" }), params({ id }))
     expect(del.status).toBe(204)
-    expect(fakeDb.store("landCoverSnapshots").size).toBe(0)
+    expect(fakeTable.countOwned("landCoverSnapshots")).toBe(0)
   })
 })
 
@@ -211,21 +212,21 @@ describe("DELETE /api/profile (hapus akun & data)", () => {
     )
     await profileRoute.PUT(apiRequest("/api/profile", { token: "token-alice", method: "PUT", body: { displayName: "Alice" } }))
 
-    expect(fakeDb.store("fields").size).toBe(3)
+    expect(fakeTable.countOwned("fields")).toBe(3)
 
     const res = await profileRoute.DELETE(apiRequest("/api/profile", { token: "token-alice", method: "DELETE" }))
     expect(res.status).toBe(204)
 
-    expect([...fakeDb.store("fields").keys()]).toEqual([bobField])
-    expect(fakeDb.store("landCoverSnapshots").size).toBe(0)
-    expect(fakeDb.store("decisions").size).toBe(0)
-    expect(fakeDb.store("users").has("alice")).toBe(false)
-    expect(fakeAuth.deletedUids).toEqual(["alice"])
+    expect(fakeTable.ownedSortKeys("fields")).toEqual([`fields#${bobField}`])
+    expect(fakeTable.countOwned("landCoverSnapshots")).toBe(0)
+    expect(fakeTable.countOwned("decisions")).toBe(0)
+    expect(fakeTable.hasProfile("alice")).toBe(false)
+    expect(fakeCognito.deletedUsernames).toEqual(["alice"])
   })
 
   it("butuh login", async () => {
     const res = await profileRoute.DELETE(apiRequest("/api/profile", { method: "DELETE" }))
     expect(res.status).toBe(401)
-    expect(fakeAuth.deletedUids).toEqual([])
+    expect(fakeCognito.deletedUsernames).toEqual([])
   })
 })
