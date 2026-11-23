@@ -3,6 +3,9 @@ const isDev = process.env.NODE_ENV !== "production"
 // Endpoint Cognito khusus pengembangan/uji lokal (emulator): kalau di-set, izinkan koneksi ke endpoint itu saja.
 // Nilai NEXT_PUBLIC_* ini ikut tertanam saat build.
 const cognitoEndpoint = process.env.NEXT_PUBLIC_COGNITO_ENDPOINT
+// Host Cognito ditulis EKSPLISIT per region. CSP hanya mengizinkan wildcard di label paling kiri ("*.x.com");
+// "cognito-idp.*.amazonaws.com" tidak sah, diabaikan browser, dan membuat semua login gagal.
+const cognitoRegion = process.env.NEXT_PUBLIC_COGNITO_REGION
 
 // Content-Security-Policy: halaman ini memuat tile peta dari banyak server
 // (Esri, OpenStreetMap, OpenTopoMap, NASA GIBS) -> img-src mengizinkan https:.
@@ -15,7 +18,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' https://cognito-idp.*.amazonaws.com${cognitoEndpoint ? ` ${cognitoEndpoint}` : ""}`,
+  `connect-src 'self'${cognitoRegion ? ` https://cognito-idp.${cognitoRegion}.amazonaws.com` : ""}${cognitoEndpoint ? ` ${cognitoEndpoint}` : ""}`,
   "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",

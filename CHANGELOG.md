@@ -19,7 +19,17 @@
 - Akun pengguna Firebase **tidak** ikut pindah (kata sandi tidak bisa disalin begitu saja); pengguna mendaftar ulang.
   Data Firestore lama tidak dimigrasi.
 
+### Ditambahkan
+- Ekspor titik api ke **S3** (opsional lewat `EXPORT_BUCKET`): diunggah lalu pengguna diarahkan ke URL unduhan sementara
+  (5 menit); tanpa bucket, berkas dikirim langsung seperti sebelumnya.
+- **CloudWatch**: log container, metric filter galat aplikasi, alarm galat dan status server, notifikasi email lewat SNS.
+
 ### Diperbaiki
+- **Login gagal di produksi ("Gagal terhubung ke server login")**: CSP memakai `https://cognito-idp.*.amazonaws.com`;
+  wildcard di tengah host tidak sah di CSP sehingga diabaikan browser dan semua panggilan ke Cognito diblokir. Kini host
+  ditulis eksplisit dari `NEXT_PUBLIC_COGNITO_REGION`, dengan tes regresi yang membaca CSP dari `next.config.mjs`. Tidak
+  tertangkap uji sebelumnya karena uji browser memakai emulator yang ditulis eksplisit di CSP.
+- Mengganti nama lahan tidak lagi menghapus ringkasan "analisis terakhir"; hanya memindahkan titik yang mereset.
 - `GET /api/alerts` akan mengembalikan 500 di DynamoDB sungguhan karena awalan kunci kosong ditolak; tertangkap
   oleh uji integrasi dan diperbaiki sebelum rilis.
 - Daftar peringatan juga gagal di DynamoDB asli karena `ExpressionAttributeNames` kosong ditolak (Moto menerimanya);
