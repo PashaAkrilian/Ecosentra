@@ -171,6 +171,33 @@ Akses/diagnosis lewat **Session Manager** (tanpa membuka port SSH). Hal yang dip
 - Hasil uji: 23/23 skenario API ujung-ke-ujung lulus, batas laju tidak bisa dibypass dengan `X-Forwarded-For` palsu, dan
   memori ±256 dari 415 MB terpakai (container `web` ±61 MB).
 
+### Domain dan HTTPS (Cloudflare DNS + Caddy)
+
+Konfigurasi yang dipakai di produksi (`ecosentra.site`, DNS di Cloudflare):
+
+| Record | Nilai | Proxy |
+|---|---|---|
+| `ecosentra.site` A | IP server (Elastic IP) | **DNS only** (awan abu-abu) |
+| `www` CNAME | `ecosentra.site` | **DNS only** |
+| MX / TXT (Email Routing, SPF, DKIM) | tidak diubah | – |
+
+Proxy Cloudflare sengaja dimatikan agar Caddy menerbitkan dan memperbarui sertifikat Let's Encrypt sendiri (HTTP-01 lewat port 80);
+sertifikat diterbitkan beberapa detik setelah DNS menunjuk ke server dan Caddy di-reload. Caddyfile di server:
+
+```
+ecosentra.site {
+	encode zstd gzip
+	reverse_proxy web:8080
+}
+www.ecosentra.site {
+	redir https://ecosentra.site{uri} permanent
+}
+```
+
+Caddy menulis ulang `X-Forwarded-For` dengan IP koneksi sebenarnya (bawaan; header dari klien tidak dipercaya); sudah diuji:
+26 permintaan dengan header palsu berbeda tetap kena batas laju (20 lolos, 6 ditolak 429). Belum ada header HSTS.
+Rollback: arahkan kembali record `ecosentra.site` ke Vercel (CNAME) — TTL 10 menit.
+
 ### Platform lain
 
 `next build && node .next/standalone/server.js` dengan Node ≥ 22.12 (salin `.next/static` ke
