@@ -2,13 +2,13 @@ import { NextResponse } from "next/server"
 import type { UserProfile } from "@/lib/data/types"
 import { profileInputSchema } from "@/lib/schemas"
 import { requireUser, type AuthUser } from "@/server/auth"
-import { FieldValue, getAdminAuth, getDb } from "@/server/firebaseAdmin"
-import { deleteAllOwned } from "@/server/firestore"
+import { deleteCognitoUser } from "@/server/cognito"
 import { handleRoute, readJsonBody } from "@/server/http"
+import { deleteAllOwned, deleteProfile, getProfile, saveProfile } from "@/server/store"
 
-// Dokumen profil disimpan di users/{uid}. Role admin TIDAK disimpan di sini
-// (bisa diubah user lewat PUT) — sumbernya custom claim di ID token.
-function toProfile(user: AuthUser, data: FirebaseFirestore.DocumentData | undefined): UserProfile {
+// Profil disimpan di item PROFILE milik pengguna. Role admin TIDAK disimpan di sini
+// (bisa diubah user lewat PUT) — sumbernya grup Cognito di ID token.
+function toProfile(user: AuthUser, data: Record<string, unknown> | undefined): UserProfile {
   return {
     uid: user.uid,
     email: user.email,
@@ -21,8 +21,7 @@ function toProfile(user: AuthUser, data: FirebaseFirestore.DocumentData | undefi
 export async function GET(request: Request) {
   return handleRoute(async () => {
     const user = await requireUser(request)
-    const doc = await getDb().collection("users").doc(user.uid).get()
-    return NextResponse.json(toProfile(user, doc.data()))
+    return NextResponse.json(toProfile(user, await getProfile(user.uid)))
   })
 }
 
@@ -30,9 +29,7 @@ export async function PUT(request: Request) {
   return handleRoute(async () => {
     const user = await requireUser(request)
     const input = profileInputSchema.parse(await readJsonBody(request))
-    const ref = getDb().collection("users").doc(user.uid)
-    await ref.set({ ...input, email: user.email, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
-    return NextResponse.json(toProfile(user, (await ref.get()).data()))
+    return NextResponse.json(toProfile(user, await saveProfile(user.uid, { ...input, email: user.email })))
   })
 }
 
@@ -48,8 +45,8 @@ export async function DELETE(request: Request) {
     for (const collection of ["landCoverSnapshots", "decisions", "fields"] as const) {
       await deleteAllOwned(collection, user.uid)
     }
-    await getDb().collection("users").doc(user.uid).delete()
-    await getAdminAuth().deleteUser(user.uid)
+    await deleteProfile(user.uid)
+    await deleteCognitoUser(user.username)
     return new NextResponse(null, { status: 204 })
   })
 }

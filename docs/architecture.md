@@ -18,8 +18,8 @@ flowchart LR
     Web --> FIRMS & BMKG & ESRI & ORNL & OM
     User -. "tile peta" .-> GIBS & ESRI
 
-    Web -->|"Firebase Admin SDK\n(login + kepemilikan)"| FS[("Firestore\nlahan · skenario · peringatan")]
-    User -->|"login"| FA["Firebase Auth"]
+    Web -->|"AWS SDK\n(kepemilikan lewat kunci)"| FS[("DynamoDB\nlahan · skenario · peringatan")]
+    User -->|"login"| FA["Amazon Cognito"]
     Web -->|"verifikasi ID token"| FA
 
     Web -.->|"opsional: GEO_SERVICE_URL"| Geo["services/geo\nFastAPI + Earth Engine\n(ESA WorldCover)"]
@@ -39,7 +39,7 @@ data pribadi nonaktif.
 
 | Komponen | Peran | Teknologi |
 |---|---|---|
-| `apps/web` | UI, API routes, akses data eksternal & Firestore | Next.js 15 (App Router), React 19, TypeScript, Tailwind, Leaflet, Zod |
+| `apps/web` | UI, API routes, akses data eksternal & DynamoDB | Next.js 15 (App Router), React 19, TypeScript, Tailwind, Leaflet, Zod |
 | `services/geo` | Tutupan lahan ESA WorldCover lewat Google Earth Engine (opsional) | FastAPI, earthengine-api, slowapi |
 | `services/mcp` | Mengekspos data EcoSentra sebagai tool MCP untuk asisten AI eksternal | MCP Python SDK, httpx |
 | `services/ml` | Tidak ada layanan; hanya README yang menjelaskan kenapa (model SegFormer belum layak) | n/a |
@@ -58,7 +58,7 @@ hooks/               use-api (fetch + state), use-hotspots, use-location-data, u
 lib/                 kode yang aman dipakai klien: tipe, skema Zod, format, geo, alerts,
                      recommendations, ndvi, map/layers, provinces
 server/              HANYA server ("server-only"): sumber data, cache, rate limit, auth,
-                     Firestore, asisten (tools/rules/claude)
+                     DynamoDB, Cognito, asisten (tools/rules/claude)
   sources/           firms · bmkg · openMeteo · modisNdvi · landcover · provinceLandcover
   geo/               poligon provinsi + klasifikasi titik→provinsi
   assistant/         tools (dipakai 2 mode) · rules · claude
@@ -88,17 +88,17 @@ multi-instance dengan beban tinggi, ganti dengan Redis/CDN.
 per poligon sebagai prefilter), bukan kotak koordinat kasar. Validasi: selisih
 < 0,1% terhadap data tanpa penyederhanaan.
 
-**4. Firestore hanya diakses lewat server.** Browser memakai Firebase hanya
-untuk Auth. Semua baca/tulis data lewat API routes memakai Admin SDK, yang
-memverifikasi ID token dan memeriksa kepemilikan (`server/auth.ts`,
-`server/firestore.ts`). `firestore.rules` menolak semua akses klien langsung,
-sehingga API key web (yang publik) tidak bisa dipakai membaca data.
+**4. DynamoDB hanya diakses lewat server.** Browser memakai Cognito hanya untuk login
+(mendapat ID token). Semua baca/tulis data lewat API routes (`server/store.ts`), yang memverifikasi
+ID token (`server/cognito.ts`, tanda tangan JWKS + penerbit + audiens) dan **menyusun kunci dari `sub` token**:
+`pk = USER#<sub>`. Karena itu data orang lain tidak mungkin terbaca (hasilnya `404`), dan tidak ada aturan
+terpisah yang bisa terlupa. Kredensial AWS server berasal dari role IAM instance, bukan dari browser.
 
 **5. Dua mode untuk LandAI dengan alat yang sama.** `server/assistant/tools.ts`
 mendefinisikan alat data sekali; mode Claude memanggilnya lewat tool use, mode
 aturan memanggilnya langsung dan menyusun teks dari hasilnya. Mode aturan tidak
 pernah mengarang angka — tanpa kunci API fitur tetap berguna dan gratis. Mode
-Claude dibatasi untuk pengguna login (kalau Firebase aktif) demi melindungi biaya.
+Claude dibatasi untuk pengguna login (kalau login aktif) demi melindungi biaya.
 
 **6. Tanpa data karangan.** Setiap tampilan data mencantumkan sumber & waktu;
 kalau sumber gagal, UI menampilkan galat dengan tombol coba-lagi, bukan angka

@@ -12,7 +12,7 @@ export class ApiError extends Error {
 interface ApiOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
   body?: unknown
-  /** Firebase ID token — wajib untuk route data milik user. */
+  /** ID token Cognito — wajib untuk route data milik user. */
   token?: string | null
   signal?: AbortSignal
 }

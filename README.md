@@ -37,7 +37,7 @@ npm ci
 npm run dev
 ```
 
-Buka `http://localhost:8080`. Tanpa pengaturan tambahan, peta, dashboard, dan peringatan sudah jalan memakai data publik. Login dan penyimpanan lahan butuh project Firebase sendiri.
+Buka `http://localhost:8080`. Tanpa pengaturan tambahan, peta, dashboard, dan peringatan sudah jalan memakai data publik. Login dan penyimpanan lahan butuh Amazon Cognito dan DynamoDB sendiri (lihat [Deploy](docs/deployment.md)).
 
 ## Dokumentasi
 

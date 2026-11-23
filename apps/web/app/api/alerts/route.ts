@@ -1,27 +1,23 @@
 import { NextResponse } from "next/server"
 import type { Alert } from "@/lib/data/types"
 import { alertInputSchema } from "@/lib/schemas"
+import { isDatabaseConfigured } from "@/server/aws"
 import { requireAdmin } from "@/server/auth"
-import { FieldValue, getDb, isFirebaseAdminConfigured } from "@/server/firebaseAdmin"
-import { serializeDoc } from "@/server/firestore"
 import { handleRoute, readJsonBody } from "@/server/http"
+import { createAlert, listAlerts } from "@/server/store"
 
 /**
  * Peringatan yang dikurasi admin (melengkapi peringatan otomatis dari
  * BMKG & FIRMS di halaman Peringatan Bencana). Baca: publik. Tulis: admin.
- * Kalau Firebase belum dikonfigurasi, GET tetap 200 dengan daftar kosong
+ * Kalau database belum dikonfigurasi, GET tetap 200 dengan daftar kosong
  * supaya halaman publik tetap jalan.
  */
 export async function GET() {
   return handleRoute(async () => {
-    if (!isFirebaseAdminConfigured()) {
+    if (!isDatabaseConfigured()) {
       return NextResponse.json({ configured: false, alerts: [] })
     }
-    const snapshot = await getDb().collection("alerts").orderBy("createdAt", "desc").limit(100).get()
-    const alerts = snapshot.docs.map((doc) => {
-      const { createdBy: _createdBy, ...alert } = serializeDoc<Alert & { createdBy?: string }>(doc)
-      return alert
-    })
+    const alerts = (await listAlerts<Alert & { createdBy?: string }>()).map(({ createdBy: _createdBy, ...alert }) => alert)
     return NextResponse.json(
       { configured: true, alerts },
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
@@ -33,9 +29,8 @@ export async function POST(request: Request) {
   return handleRoute(async () => {
     const admin = await requireAdmin(request)
     const input = alertInputSchema.parse(await readJsonBody(request))
-    const ref = await getDb()
-      .collection("alerts")
-      .add({ ...input, createdBy: admin.uid, createdAt: FieldValue.serverTimestamp() })
-    return NextResponse.json(serializeDoc<Alert>(await ref.get()), { status: 201 })
+    const created = await createAlert<Alert & { createdBy?: string }>(input, admin.uid)
+    const { createdBy: _createdBy, ...alert } = created
+    return NextResponse.json(alert, { status: 201 })
   })
 }

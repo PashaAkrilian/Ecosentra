@@ -1,22 +1,22 @@
 const isDev = process.env.NODE_ENV !== "production"
 
-// Firebase Auth Emulator untuk pengembangan lokal (lihat docs/deployment.md): kalau host-nya
-// di-set, izinkan koneksi ke host itu saja. Nilai NEXT_PUBLIC_* ini ikut tertanam saat build.
-const authEmulator = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST
+// Endpoint Cognito khusus pengembangan/uji lokal (emulator): kalau di-set, izinkan koneksi ke endpoint itu saja.
+// Nilai NEXT_PUBLIC_* ini ikut tertanam saat build.
+const cognitoEndpoint = process.env.NEXT_PUBLIC_COGNITO_ENDPOINT
 
 // Content-Security-Policy: halaman ini memuat tile peta dari banyak server
 // (Esri, OpenStreetMap, OpenTopoMap, NASA GIBS) -> img-src mengizinkan https:.
-// Firebase Auth butuh googleapis (REST) & iframe di *.firebaseapp.com untuk
-// login Google. 'unsafe-inline' pada script dibutuhkan skrip hidrasi Next.js
+// Login memanggil API Cognito (cognito-idp.<region>.amazonaws.com) langsung dari browser.
+// 'unsafe-inline' pada script dibutuhkan skrip hidrasi Next.js
 // tanpa nonce; 'unsafe-eval' hanya saat development (React Refresh).
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://apis.google.com${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com${authEmulator ? ` http://${authEmulator}` : ""}`,
-  "frame-src https://*.firebaseapp.com https://accounts.google.com",
+  `connect-src 'self' https://cognito-idp.*.amazonaws.com${cognitoEndpoint ? ` ${cognitoEndpoint}` : ""}`,
+  "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -26,6 +26,8 @@ const csp = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  // Server mandiri (node server.js) untuk image Docker kecil di EC2.
+  output: "standalone",
   images: {
     unoptimized: true,
   },

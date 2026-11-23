@@ -26,11 +26,11 @@ Router — API routes harus di `app/api/*`), file-file di dalamnya sudah
 dipisah jelas menurut domain:
 
 - **Backend**: `app/api/**` (route handler) + `server/**` (kode server-only,
-  mis. `server/firebaseAdmin.ts`). Kode di `server/` memakai Firebase Admin
+  mis. `server/store.ts`). Kode di `server/` memakai AWS SDK
   SDK dan env var tanpa prefix `NEXT_PUBLIC_` — **jangan pernah** diimport
   dari file yang punya `'use client'`.
 - **Frontend**: `app/**` (pages & layout, di luar `app/api`) + `components/**`
-  + `hooks/**` + `lib/**` (termasuk `lib/firebaseClient.ts` untuk Firebase
+  + `hooks/**` + `lib/**` (termasuk `lib/cognitoClient.ts` untuk Cognito
   client SDK di browser).
 - **Shared**: `public/**` (aset statis).
 

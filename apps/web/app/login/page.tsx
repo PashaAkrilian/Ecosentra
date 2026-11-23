@@ -12,26 +12,23 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { safeNextPath } from "@/lib/redirect"
 
-function GoogleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
-      <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8z" />
-      <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z" />
-      <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8l4-3.1z" />
-      <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9z" />
-    </svg>
-  )
-}
+/** Layar yang tampil: form masuk/daftar, kode verifikasi email, atau pengaturan ulang kata sandi. */
+type View = "auth" | "confirm" | "reset"
+
+const MIN_PASSWORD = 8
 
 function LoginContent() {
-  const { configured, user, loading, signIn, signUp, signInWithGoogle, resetPassword } = useAuth()
+  const { configured, user, loading, signIn, signUp, confirmSignUp, resendCode, startPasswordReset, finishPasswordReset } = useAuth()
   const router = useRouter()
   const next = safeNextPath(useSearchParams().get("next"))
 
+  const [view, setView] = useState<View>("auth")
   const [tab, setTab] = useState("masuk")
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [code, setCode] = useState("")
+  const [codeSent, setCodeSent] = useState(false) // reset: kode sudah diminta
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -49,24 +46,99 @@ function LoginContent() {
       if (success) setNotice(success)
     } catch (e) {
       setError(describeAuthError(e))
+      // Akun ada tapi belum dikonfirmasi: arahkan ke layar kode, bukan hanya menampilkan galat.
+      if ((e as { name?: string })?.name === "UserNotConfirmedException") setView("confirm")
     } finally {
       setBusy(false)
     }
   }
 
-  const submit = (event: React.FormEvent) => {
+  const submitAuth = (event: React.FormEvent) => {
     event.preventDefault()
-    if (tab === "masuk") void run(() => signIn(email.trim(), password))
-    else void run(() => signUp(name.trim(), email.trim(), password))
-  }
-
-  const forgot = () => {
-    if (!email.trim()) {
-      setError("Isi email Anda terlebih dahulu, lalu tekan “Lupa kata sandi”.")
+    if (tab === "masuk") {
+      void run(() => signIn(email.trim(), password))
       return
     }
-    void run(() => resetPassword(email.trim()), "Jika email terdaftar, tautan untuk mengatur ulang kata sandi sudah dikirim.")
+    void run(async () => {
+      if (password.length < MIN_PASSWORD) throw Object.assign(new Error(), { name: "InvalidPasswordException" })
+      const { confirmed } = await signUp(name.trim(), email.trim(), password)
+      if (!confirmed) {
+        setView("confirm")
+        setNotice(`Kode verifikasi sudah dikirim ke ${email.trim()}. Masukkan kodenya di bawah.`)
+      } else {
+        await signIn(email.trim(), password)
+      }
+    })
   }
+
+  const submitConfirm = (event: React.FormEvent) => {
+    event.preventDefault()
+    void run(async () => {
+      await confirmSignUp(email.trim(), code.trim())
+      if (password) await signIn(email.trim(), password)
+      else {
+        setView("auth")
+        setTab("masuk")
+        setNotice("Akun terkonfirmasi. Silakan masuk.")
+      }
+    })
+  }
+
+  const openReset = () => {
+    setView("reset")
+    setCodeSent(false)
+    setCode("")
+    setPassword("")
+    setError(null)
+    setNotice(null)
+  }
+
+  const submitReset = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!codeSent) {
+      if (!email.trim()) return setError("Isi email Anda terlebih dahulu.")
+      void run(async () => {
+        await startPasswordReset(email.trim())
+        setCodeSent(true)
+        setNotice("Jika email terdaftar, kode untuk mengatur ulang kata sandi sudah dikirim.")
+      })
+      return
+    }
+    if (password.length < MIN_PASSWORD) return setError(describeAuthError(Object.assign(new Error(), { name: "InvalidPasswordException" })))
+    void run(async () => {
+      await finishPasswordReset(email.trim(), code.trim(), password)
+      setPassword("")
+      setCode("")
+      setView("auth")
+      setTab("masuk")
+      setNotice("Kata sandi diperbarui. Silakan masuk dengan kata sandi baru.")
+    })
+  }
+
+  const feedback = (
+    <>
+      {error && (
+        <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="flex items-start gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <MailCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> {notice}
+        </p>
+      )}
+    </>
+  )
+
+  const backToLogin = (
+    <button
+      type="button"
+      onClick={() => { setView("auth"); setTab("masuk"); setError(null); setNotice(null); setCode("") }}
+      className="block w-full text-center text-sm text-emerald-800 underline underline-offset-2"
+    >
+      Kembali ke halaman masuk
+    </button>
+  )
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-4 py-10">
@@ -97,6 +169,60 @@ function LoginContent() {
                   <Link href="/dashboard">Lanjut tanpa akun</Link>
                 </Button>
               </div>
+            ) : view === "confirm" ? (
+              <form onSubmit={submitConfirm} className="space-y-4" noValidate>
+                <p className="text-sm text-muted-foreground">Masukkan kode verifikasi 6 digit yang dikirim ke email Anda.</p>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="code">Kode verifikasi</Label>
+                  <Input id="code" inputMode="numeric" autoComplete="one-time-code" required value={code} onChange={(e) => setCode(e.target.value)} />
+                </div>
+                {feedback}
+                <Button type="submit" className="w-full" disabled={busy || !email || !code}>
+                  {busy && <LoaderCircle className="animate-spin" aria-hidden />} Konfirmasi
+                </Button>
+                <button
+                  type="button"
+                  disabled={busy || !email}
+                  onClick={() => void run(() => resendCode(email.trim()), "Kode baru sudah dikirim.")}
+                  className="block w-full text-center text-sm text-emerald-800 underline underline-offset-2"
+                >
+                  Kirim ulang kode
+                </button>
+                {backToLogin}
+              </form>
+            ) : view === "reset" ? (
+              <form onSubmit={submitReset} className="space-y-4" noValidate>
+                <p className="text-sm text-muted-foreground">
+                  {codeSent ? "Masukkan kode dari email dan kata sandi baru Anda." : "Kami akan mengirim kode ke email Anda."}
+                </p>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" autoComplete="email" required value={email} disabled={codeSent} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                {codeSent && (
+                  <>
+                    <div>
+                      <Label htmlFor="code">Kode verifikasi</Label>
+                      <Input id="code" inputMode="numeric" autoComplete="one-time-code" required value={code} onChange={(e) => setCode(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label htmlFor="password">Kata sandi baru</Label>
+                      <Input id="password" type="password" autoComplete="new-password" required minLength={MIN_PASSWORD} value={password} onChange={(e) => setPassword(e.target.value)} />
+                      <p className="mt-1 text-xs text-muted-foreground">Minimal {MIN_PASSWORD} karakter, dengan huruf besar, huruf kecil, dan angka.</p>
+                    </div>
+                  </>
+                )}
+                {feedback}
+                <Button type="submit" className="w-full" disabled={busy || !email || (codeSent && (!code || !password))}>
+                  {busy && <LoaderCircle className="animate-spin" aria-hidden />}
+                  {codeSent ? "Atur ulang kata sandi" : "Kirim kode"}
+                </Button>
+                {backToLogin}
+              </form>
             ) : (
               <Tabs value={tab} onValueChange={(v) => { setTab(v); setError(null); setNotice(null) }}>
                 <TabsList className="grid w-full grid-cols-2">
@@ -104,7 +230,7 @@ function LoginContent() {
                   <TabsTrigger value="daftar">Daftar</TabsTrigger>
                 </TabsList>
 
-                <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
+                <form onSubmit={submitAuth} className="mt-5 space-y-4" noValidate>
                   <TabsContent value="daftar" className="mt-0">
                     <Label htmlFor="name">Nama</Label>
                     <Input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -120,41 +246,27 @@ function LoginContent() {
                       type="password"
                       autoComplete={tab === "masuk" ? "current-password" : "new-password"}
                       required
-                      minLength={6}
+                      minLength={MIN_PASSWORD}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
-                    {tab === "daftar" && <p className="mt-1 text-xs text-muted-foreground">Minimal 6 karakter.</p>}
+                    {tab === "daftar" && (
+                      <p className="mt-1 text-xs text-muted-foreground">Minimal {MIN_PASSWORD} karakter, dengan huruf besar, huruf kecil, dan angka.</p>
+                    )}
                   </div>
 
-                  {error && (
-                    <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-800">
-                      {error}
-                    </p>
-                  )}
-                  {notice && (
-                    <p role="status" className="flex items-start gap-2 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-                      <MailCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> {notice}
-                    </p>
-                  )}
+                  {feedback}
 
                   <Button type="submit" className="w-full" disabled={busy || !email || !password}>
                     {busy && <LoaderCircle className="animate-spin" aria-hidden />}
                     {tab === "masuk" ? "Masuk" : "Buat akun"}
                   </Button>
                   {tab === "masuk" && (
-                    <button type="button" onClick={forgot} className="block w-full text-center text-sm text-emerald-800 underline underline-offset-2" disabled={busy}>
+                    <button type="button" onClick={openReset} className="block w-full text-center text-sm text-emerald-800 underline underline-offset-2" disabled={busy}>
                       Lupa kata sandi?
                     </button>
                   )}
                 </form>
-
-                <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="h-px flex-1 bg-border" /> atau <span className="h-px flex-1 bg-border" />
-                </div>
-                <Button type="button" variant="outline" className="w-full" disabled={busy} onClick={() => void run(signInWithGoogle)}>
-                  <GoogleIcon /> Lanjut dengan Google
-                </Button>
               </Tabs>
             )}
           </CardContent>
