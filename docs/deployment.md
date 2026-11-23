@@ -116,7 +116,7 @@ Opsional, tapi dipakai di produksi:
 # Bucket privat; objek ekspor otomatis dihapus setelah 1 hari
 aws s3api create-bucket --bucket <bucket-ekspor> --region <region> --create-bucket-configuration LocationConstraint=<region>
 aws s3api put-public-access-block --bucket <bucket-ekspor> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-aws s3api put-bucket-lifecycle-configuration --bucket <bucket-ekspor> --lifecycle-configuration '{{"Rules":[{{"ID":"hapus-ekspor-1-hari","Status":"Enabled","Filter":{{"Prefix":"exports/"}},"Expiration":{{"Days":1}}}}]}}'
+aws s3api put-bucket-lifecycle-configuration --bucket <bucket-ekspor> --lifecycle-configuration '{"Rules":[{"ID":"hapus-ekspor-1-hari","Status":"Enabled","Filter":{"Prefix":"exports/"},"Expiration":{"Days":1}}]}'
 
 # Log container ke CloudWatch + metrik & alarm dari log galat aplikasi
 aws logs create-log-group --log-group-name /ecosentra/web --region <region>
