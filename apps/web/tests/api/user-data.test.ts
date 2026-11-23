@@ -144,6 +144,32 @@ describe("/api/fields", () => {
   })
 })
 
+describe("/api/fields: pembaruan dan analisis terakhir", () => {
+  it("mengganti nama (lokasi tetap dikirim) tidak mereset analisis terakhir; memindahkan titik mereset", async () => {
+    const { id } = await createField()
+    await analyzeRoute.POST(apiRequest(`/api/fields/${id}/analyze`, { token: "token-alice", method: "POST" }), params({ id }))
+    const patch = async (body: object) =>
+      (await fieldRoute.PATCH(apiRequest(`/api/fields/${id}`, { token: "token-alice", method: "PATCH", body }), params({ id }))).json()
+
+    // Formulir Ubah selalu mengirim lokasi apa adanya.
+    const renamed = await patch({ name: "Sawah Baru", location: validField.location })
+    expect(renamed.name).toBe("Sawah Baru")
+    expect(renamed.lastAnalysis).toMatchObject({ dominantClass: "Tanaman pertanian" })
+
+    const moved = await patch({ location: { lat: validField.location.lat, lng: validField.location.lng + 0.01 } })
+    expect(moved.lastAnalysis).toBeNull()
+  })
+
+  it("PATCH lahan milik orang lain tetap 404 walau mengirim lokasi", async () => {
+    const { id } = await createField()
+    const res = await fieldRoute.PATCH(
+      apiRequest(`/api/fields/${id}`, { token: "token-bob", method: "PATCH", body: { name: "x", location: validField.location } }),
+      params({ id }),
+    )
+    expect(res.status).toBe(404)
+  })
+})
+
 describe("/api/decisions", () => {
   it("CRUD skenario milik sendiri dengan nilai default", async () => {
     const res = await decisionsRoute.POST(

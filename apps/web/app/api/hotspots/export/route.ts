@@ -1,3 +1,4 @@
+import { exportBucket, storeExport } from "@/server/exportStore"
 import { hotspotExportQuerySchema, searchParamsToObject } from "@/lib/schemas"
 import { toCsv, toGeoJson, toKml } from "@/server/export/hotspots"
 import { handleRoute, HttpError } from "@/server/http"
@@ -40,6 +41,13 @@ export async function GET(request: Request) {
         : format === "kml"
           ? toKml(hotspots, `Titik api ${range} — EcoSentra`)
           : toGeoJson(hotspots)
+
+    const bucket = exportBucket()
+    if (bucket) {
+      // Disimpan di S3 lalu diarahkan ke URL unduhan sementara; no-store karena URL-nya berkedaluwarsa.
+      const url = await storeExport(bucket, filename, CONTENT_TYPES[format], body)
+      return new Response(null, { status: 302, headers: { Location: url, "Cache-Control": "no-store" } })
+    }
 
     return new Response(body, {
       headers: {

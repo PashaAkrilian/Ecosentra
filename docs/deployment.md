@@ -108,6 +108,29 @@ Kredensial AWS di server berasal dari **role IAM instance** (jangan menulis acce
 
 Buka `/settings` — semua integrasi yang Anda isi harus berstatus **Aktif**.
 
+### 2.3b S3 (ekspor) dan CloudWatch (log & alarm)
+
+Opsional, tapi dipakai di produksi:
+
+```bash
+# Bucket privat; objek ekspor otomatis dihapus setelah 1 hari
+aws s3api create-bucket --bucket <bucket-ekspor> --region <region> --create-bucket-configuration LocationConstraint=<region>
+aws s3api put-public-access-block --bucket <bucket-ekspor> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+aws s3api put-bucket-lifecycle-configuration --bucket <bucket-ekspor> --lifecycle-configuration '{"Rules":[{"ID":"hapus-ekspor-1-hari","Status":"Enabled","Filter":{"Prefix":"exports/"},"Expiration":{"Days":1}}]}'
+
+# Log container ke CloudWatch + metrik & alarm dari log galat aplikasi
+aws logs create-log-group --log-group-name /ecosentra/web --region <region>
+aws logs put-retention-policy --log-group-name /ecosentra/web --retention-in-days 14 --region <region>
+aws logs put-metric-filter --log-group-name /ecosentra/web --filter-name app-errors --filter-pattern '"Unhandled API error"' \
+  --metric-transformations metricName=AppErrors,metricNamespace=Ecosentra,metricValue=1,defaultValue=0 --region <region>
+```
+
+Isi `EXPORT_BUCKET=<bucket-ekspor>` di container, dan jalankan dengan
+`--log-driver awslogs --log-opt awslogs-region=<region> --log-opt awslogs-group=/ecosentra/web`. Tambahkan ke kebijakan role
+instance: `s3:PutObject`/`s3:GetObject` pada `arn:aws:s3:::<bucket-ekspor>/exports/*` dan
+`logs:CreateLogStream`/`logs:PutLogEvents` pada `log-group:/ecosentra/web:*` (tetap sempit). Alarm ke email lewat SNS
+(langganan email harus dikonfirmasi lewat tautan di email AWS) dan alarm `StatusCheckFailed` instance.
+
 ### 2.4 Peran admin
 
 Daftar dulu lewat `/login`, lalu tambahkan akun ke grup `admin`:
