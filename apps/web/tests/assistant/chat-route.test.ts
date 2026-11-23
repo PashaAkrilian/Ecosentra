@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { resetRateLimits } from "@/server/rateLimit"
-import { apiRequest, fakeDb, firebaseState } from "../helpers/fakeFirebase"
+import { apiRequest, fakeTable, awsState } from "../helpers/fakeAws"
 
-vi.mock("@/server/firebaseAdmin", async () => (await import("../helpers/fakeFirebase")).fakeFirebaseAdminModule())
+vi.mock("@/server/aws", async () => (await import("../helpers/fakeAws")).fakeAwsModule())
+vi.mock("@/server/cognito", async () => (await import("../helpers/fakeAws")).fakeCognitoModule())
 
 const answerWithRules = vi.fn()
 vi.mock("@/server/assistant/rules", () => ({ answerWithRules: (...a: unknown[]) => answerWithRules(...a) }))
@@ -26,8 +27,8 @@ async function events(response: Response) {
 }
 
 beforeEach(() => {
-  fakeDb.reset()
-  firebaseState.configured = true
+  fakeTable.reset()
+  awsState.configured = true
   answerWithRules.mockReset().mockResolvedValue({ text: "Jawaban aturan", tools: ["get_fire_hotspots"] })
   runClaudeChat.mockReset().mockImplementation(async ({ emit }: { emit: (e: unknown) => void }) => {
     emit({ type: "delta", text: "Jawaban Claude" })
@@ -55,7 +56,7 @@ describe("POST /api/chat", () => {
     expect(runClaudeChat).not.toHaveBeenCalled()
   })
 
-  it("dengan kunci & Firebase aktif: belum login -> mode aturan + saran masuk", async () => {
+  it("dengan kunci & login aktif: belum login -> mode aturan + saran masuk", async () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "sk-test")
     const res = await POST(apiRequest("/api/chat", { method: "POST", body }))
     const stream = await events(res)
@@ -82,9 +83,9 @@ describe("POST /api/chat", () => {
     expect(runClaudeChat.mock.calls[0]![0]).toMatchObject({ model: "claude-sonnet-5-5" })
   })
 
-  it("tanpa Firebase tapi dengan kunci -> mode Claude dengan batas laju ketat (8/menit/IP)", async () => {
+  it("tanpa login tapi dengan kunci -> mode Claude dengan batas laju ketat (8/menit/IP)", async () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "sk-test")
-    firebaseState.configured = false
+    awsState.configured = false
     const request = () =>
       new Request("http://localhost/api/chat", {
         method: "POST",

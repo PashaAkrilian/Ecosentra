@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server"
-import type { Field } from "@/lib/data/types"
+import type { Field, LandCoverSnapshot } from "@/lib/data/types"
 import { fieldUpdateSchema } from "@/lib/schemas"
 import { requireUser } from "@/server/auth"
-import { getDb } from "@/server/firebaseAdmin"
-import { deleteOwned, getOwned, updateOwned } from "@/server/firestore"
 import { handleRoute, readJsonBody } from "@/server/http"
+import { deleteOwned, getOwned, listOwned, updateOwned } from "@/server/store"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -32,16 +31,8 @@ export async function DELETE(request: Request, { params }: Params) {
     await deleteOwned("fields", id, user.uid)
 
     // Hapus juga riwayat analisis lahan ini.
-    const snapshots = await getDb()
-      .collection("landCoverSnapshots")
-      .where("userId", "==", user.uid)
-      .where("fieldId", "==", id)
-      .get()
-    if (!snapshots.empty) {
-      const batch = getDb().batch()
-      snapshots.docs.forEach((doc) => batch.delete(doc.ref))
-      await batch.commit()
-    }
+    const snapshots = await listOwned<LandCoverSnapshot>("landCoverSnapshots", user.uid, { fieldId: id })
+    for (const snapshot of snapshots) await deleteOwned("landCoverSnapshots", snapshot.id, user.uid)
 
     return new NextResponse(null, { status: 204 })
   })

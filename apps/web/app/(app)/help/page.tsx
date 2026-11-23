@@ -275,9 +275,10 @@ export default function HelpPage() {
             <code className="rounded bg-muted px-1">.env.local.example</code>):
           </p>
           <ul className="list-disc space-y-1 pl-5">
-            <li><strong>Login:</strong> <code className="rounded bg-muted px-1">NEXT_PUBLIC_FIREBASE_API_KEY</code>, <code className="rounded bg-muted px-1">_AUTH_DOMAIN</code>, <code className="rounded bg-muted px-1">_PROJECT_ID</code>, <code className="rounded bg-muted px-1">_APP_ID</code></li>
-            <li><strong>Penyimpanan data:</strong> <code className="rounded bg-muted px-1">FIREBASE_PROJECT_ID</code>, <code className="rounded bg-muted px-1">FIREBASE_CLIENT_EMAIL</code>, <code className="rounded bg-muted px-1">FIREBASE_PRIVATE_KEY</code> (Admin SDK)</li>
-            <li><strong>Admin:</strong> jalankan <code className="rounded bg-muted px-1">npm run seed -- &lt;uid&gt; --admin</code> untuk memberi peran admin ke satu akun</li>
+            <li><strong>Login (browser):</strong> <code className="rounded bg-muted px-1">NEXT_PUBLIC_COGNITO_REGION</code>, <code className="rounded bg-muted px-1">NEXT_PUBLIC_COGNITO_CLIENT_ID</code></li>
+            <li><strong>Login (server):</strong> <code className="rounded bg-muted px-1">COGNITO_USER_POOL_ID</code>, <code className="rounded bg-muted px-1">COGNITO_CLIENT_ID</code></li>
+            <li><strong>Penyimpanan data:</strong> <code className="rounded bg-muted px-1">DYNAMODB_TABLE</code> dan kredensial AWS (role EC2 di produksi)</li>
+            <li><strong>Admin:</strong> tambahkan akun ke grup Cognito <code className="rounded bg-muted px-1">admin</code> lewat konsol AWS atau <code className="rounded bg-muted px-1">aws cognito-idp admin-add-user-to-group</code></li>
             <li><strong>LandAI penuh:</strong> <code className="rounded bg-muted px-1">ANTHROPIC_API_KEY</code></li>
             <li><strong>Tutupan lahan ESA via GEE:</strong> <code className="rounded bg-muted px-1">GEO_SERVICE_URL</code> (lihat <code className="rounded bg-muted px-1">services/geo</code>)</li>
           </ul>

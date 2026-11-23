@@ -45,8 +45,8 @@ jobs:
       - name: Test
         run: npm test
 
-      # Build TIDAK membutuhkan kredensial Firebase/Anthropic: aplikasi dibangun
-      # dalam mode demo (Firebase Admin diinisialisasi malas, saat dibutuhkan).
+      # Build TIDAK membutuhkan kredensial AWS/Anthropic: aplikasi dibangun
+      # dalam mode demo (klien AWS dibuat malas, saat dibutuhkan).
       - name: Build
         run: npm run build
 
@@ -57,7 +57,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=critical
 
   web-emulator:
-    name: Web — integrasi Firebase Emulator (Admin SDK asli)
+    name: Web — integrasi DynamoDB (emulator Moto)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -69,32 +69,29 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
 
-      # Emulator Firestore berjalan di JVM.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-python@v5
         with:
-          distribution: temurin
-          java-version: "21"
-
-      - name: Cache binary emulator
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/firebase/emulators
-          key: firebase-emulators-${{ runner.os }}-v1
+          python-version: "3.12"
 
       - name: Install dependencies
         run: npm ci
         working-directory: apps/web
 
-      # Menjalankan emulator Auth + Firestore (dengan firestore.rules repo), mengeksekusi uji,
-      # lalu mematikannya. Memverifikasi token, kepemilikan data, kaskade hapus, claim admin,
-      # hapus akun, dan bahwa aturan menolak akses klien langsung.
-      # Memakai firebase.emulators.json (bukan firebase.json): blok hosting.source di sana
-      # membuat firebase-tools mencoba membangun Next.js setiap emulator dijalankan.
+      # Moto menirukan DynamoDB; uji menjalankan server/store.ts yang SESUNGGUHNYA terhadapnya
+      # (kunci/kondisi/pembaruan, isolasi antar pengguna, hapus massal, batas daftar).
+      - name: Jalankan emulator DynamoDB
+        run: |
+          pip install 'moto[server]'
+          (AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test nohup moto_server -H 127.0.0.1 -p 5555 > moto.log 2>&1 &)
+          for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5555/moto-api/ && break; sleep 1; done
+
       - name: Uji integrasi
-        run: >
-          npx --yes firebase-tools@15 emulators:exec --config firebase.emulators.json
-          --only auth,firestore --project demo-ecosentra
-          "FIREBASE_PROJECT_ID=demo-ecosentra npm run test:emulator --prefix apps/web"
+        run: npm run test:emulator
+        working-directory: apps/web
+        env:
+          DYNAMODB_ENDPOINT: http://127.0.0.1:5555
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
 
   geo:
     name: services/geo — ruff & pytest
@@ -143,3 +140,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build services/${{ matrix.service }}
         run: docker build --tag ecosentra-${{ matrix.service }}:ci services/${{ matrix.service }}
+
+  docker-web:
+    name: Docker — build image web (standalone)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      # Build mengunduh font Google, jadi butuh internet. NEXT_PUBLIC_* sengaja kosong: image mode demo.
+      - name: Build apps/web
+        run: docker build --tag ecosentra-web:ci apps/web

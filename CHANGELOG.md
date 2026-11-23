@@ -1,5 +1,31 @@
 # Changelog
 
+## Belum dirilis — migrasi penuh ke AWS
+
+### Diubah
+- **Login**: Firebase Auth → **Amazon Cognito** (daftar dengan kode verifikasi email, masuk, lupa kata sandi, keluar,
+  pembaruan token otomatis). Server memverifikasi ID token (JWKS, penerbit, audiens, kedaluwarsa, jenis token).
+  Admin = grup Cognito `admin`.
+- **Data**: Firestore → **Amazon DynamoDB** (satu tabel; kunci `USER#<sub>` menjamin isolasi antar pengguna).
+- **Deploy**: Vercel → Docker (`apps/web/Dockerfile`, `docker-compose.yml`, `Caddyfile`) di satu server (EC2).
+  `output: "standalone"`; image non-root ±360 MB.
+- CSP: izin ke `cognito-idp.*.amazonaws.com`; Google/Firebase dibuang.
+
+### Dihapus
+- Login Google (butuh Hosted UI + federasi Cognito; belum dibuat), skrip `seedFirestore.mjs`,
+  `firestore.rules`, `firebase*.json`, dependensi `firebase` dan `firebase-admin`.
+
+### Catatan migrasi
+- Akun pengguna Firebase **tidak** ikut pindah (kata sandi tidak bisa disalin begitu saja); pengguna mendaftar ulang.
+  Data Firestore lama tidak dimigrasi.
+
+### Diperbaiki
+- `GET /api/alerts` akan mengembalikan 500 di DynamoDB sungguhan karena awalan kunci kosong ditolak; tertangkap
+  oleh uji integrasi dan diperbaiki sebelum rilis.
+- Daftar peringatan juga gagal di DynamoDB asli karena `ExpressionAttributeNames` kosong ditolak (Moto menerimanya);
+  tertangkap saat uji terhadap AWS nyata. Tiruan di tes kini menegakkan kedua aturan DynamoDB itu.
+- Respons `POST/PATCH /api/alerts` tidak lagi memuat `createdBy` (uid admin).
+
 ## 1.0.0 — rilis final
 
 Penulisan ulang menyeluruh dari prototipe (UI memakai data contoh) menjadi platform dengan data nyata.

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { isFirebaseAdminConfigured } from "@/server/firebaseAdmin"
+import { isAuthConfigured, isDatabaseConfigured } from "@/server/aws"
 
 /**
  * Status integrasi (tanpa membocorkan nilai rahasia apa pun) — dipakai
@@ -11,8 +11,9 @@ export async function GET() {
       status: "ok",
       time: new Date().toISOString(),
       integrations: {
-        firebaseAdmin: isFirebaseAdminConfigured(),
-        firebaseAuthClient: Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY),
+        auth: isAuthConfigured(),
+        authClient: Boolean(process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID),
+        database: isDatabaseConfigured(),
         geoService: Boolean(process.env.GEO_SERVICE_URL),
         llm: Boolean(process.env.ANTHROPIC_API_KEY),
       },

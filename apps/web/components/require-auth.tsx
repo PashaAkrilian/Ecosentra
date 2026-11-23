@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 
 /**
  * Pembungkus halaman yang butuh akun. Menangani tiga keadaan non-login:
- * mode demo (Firebase belum dikonfigurasi), status login belum diketahui,
+ * mode demo (Cognito belum dikonfigurasi), status login belum diketahui,
  * dan belum login. Kalau `title` diberikan, judul halaman tetap tampil di ketiganya.
  */
 export function RequireAuth({ feature, title, children }: { feature: string; title?: string; children: ReactNode }) {
@@ -27,7 +27,7 @@ export function RequireAuth({ feature, title, children }: { feature: string; tit
         <EmptyState icon={ServerOff} title={`${feature} belum aktif`}>
           Instalasi ini berjalan dalam <strong>mode demo</strong> tanpa login, sehingga data pribadi tidak disimpan. Semua
           data publik (peta, titik api, gempa, cuaca, NDVI) tetap tersedia penuh. Pemilik instalasi dapat mengaktifkan
-          login dengan mengisi variabel Firebase — lihat{" "}
+          login dengan mengisi variabel Cognito — lihat{" "}
           <Link href="/help#mode-demo" className="font-medium text-emerald-800 underline underline-offset-2">
             Bantuan
           </Link>

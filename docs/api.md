@@ -17,7 +17,7 @@ dan dipakai bersama oleh UI.
   | 404 | data tidak ada **atau milik pengguna lain** (sengaja tidak dibedakan) |
   | 413 | body > 100 KB (200 KB untuk `/api/chat`) |
   | 429 | terlalu banyak permintaan (header `Retry-After`) |
-  | 503 | Firebase belum dikonfigurasi di server |
+  | 503 | login/database AWS belum dikonfigurasi di server |
   | 500 | kesalahan tak terduga (detail hanya di log server) |
 
 - Koordinat (`lat`, `lng`) harus berada di kotak pembatas Indonesia
@@ -47,7 +47,7 @@ Data diambil dari penyedia eksternal lalu di-cache di memori server
 | `GET /api/ecosystem/province` | `iso` | `ProvinceLandCover` — komposisi tutupan lahan satu provinsi | 20/mnt/IP | 7 hari |
 | `GET /api/geo/provinces` | – | GeoJSON 34 provinsi (properti `iso`, `name`, `island`, `areaKm2`) | – | statis |
 | `GET /api/meta` | – | `{ landcoverYear }` (tahun terbaru peta tutupan lahan Esri) | – | 24 jam |
-| `GET /api/alerts` | – | `{ configured, alerts }` — peringatan kurasi admin (daftar kosong kalau Firebase belum aktif) | – | – |
+| `GET /api/alerts` | – | `{ configured, alerts }` — peringatan kurasi admin (daftar kosong kalau database belum dikonfigurasi) | – | – |
 | `GET /api/healthcheck` | – | `{ status, time, integrations }` — status integrasi opsional, tanpa nilai rahasia | – | – |
 
 ### Tutupan lahan: dua dataset
@@ -60,7 +60,7 @@ dan jatuh ke Esri bila gagal. Respons selalu menyebut dataset & tahun di
 
 ## Data pribadi (butuh login)
 
-Header: `Authorization: Bearer <Firebase ID token>`. Setiap dokumen punya
+Header: `Authorization: Bearer <Cognito ID token>`. Setiap dokumen punya
 `userId` pemilik; pengguna hanya bisa membaca/mengubah miliknya sendiri.
 
 | Endpoint | Fungsi |
@@ -106,9 +106,9 @@ Mode ditentukan server:
 | Kondisi | Mode |
 |---|---|
 | `ANTHROPIC_API_KEY` kosong | `rules` — jawaban dari aturan kata kunci + data asli, tanpa model bahasa |
-| kunci ada, Firebase aktif, pengguna **login** | `claude` — model Claude memakai alat data langsung (batas 8 req/mnt/IP dan 150/hari/pengguna) |
-| kunci ada, Firebase aktif, **belum login** | `rules` dengan `notice: "login"` (melindungi kunci/biaya dari penyalahgunaan) |
-| kunci ada, Firebase tidak aktif (dev lokal) | `claude` dengan batas 8 req/mnt/IP |
+| kunci ada, login (Cognito) aktif, pengguna **login** | `claude` — model Claude memakai alat data langsung (batas 8 req/mnt/IP dan 150/hari/pengguna) |
+| kunci ada, login (Cognito) aktif, **belum login** | `rules` dengan `notice: "login"` (melindungi kunci/biaya dari penyalahgunaan) |
+| kunci ada, login tidak aktif (dev lokal) | `claude` dengan batas 8 req/mnt/IP |
 
 Alat yang dipakai model: `get_fire_hotspots`, `get_earthquakes`, `get_weather`,
 `get_ndvi`, `get_land_cover`, `get_province_land_cover`, dan `get_location_briefing` —
