@@ -6,6 +6,8 @@ import { apiRequest, fakeTable, awsState } from "../helpers/fakeAws"
 
 vi.mock("@/server/aws", async () => (await import("../helpers/fakeAws")).fakeAwsModule())
 vi.mock("@/server/cognito", async () => (await import("../helpers/fakeAws")).fakeCognitoModule())
+const storeExport = vi.fn(async (_bucket: string, filename: string, _contentType?: string, _body?: string) => `https://s3.example.test/signed/${filename}?X-Amz-Signature=abc`)
+vi.mock("@/server/exportStore", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/server/exportStore")>()), storeExport }))
 
 const hotspotsRoute = await import("@/app/api/hotspots/route")
 const summaryRoute = await import("@/app/api/hotspots/summary/route")
@@ -85,6 +87,32 @@ describe("/api/hotspots/export", () => {
     const kml = await (await exportRoute.GET(apiRequest("/api/hotspots/export?format=kml&province=ID-SS"))).text()
     expect(kml).toContain("<kml")
     expect(kml.match(/<Placemark>/g)).toHaveLength(2)
+  })
+
+  describe("dengan EXPORT_BUCKET (S3)", () => {
+    afterEach(() => {
+      delete process.env.EXPORT_BUCKET
+      storeExport.mockClear()
+    })
+
+    it("mengunggah ke S3 dan mengarahkan (302) ke URL sementara tanpa menyimpan di cache", async () => {
+      process.env.EXPORT_BUCKET = "bucket-uji"
+      const res = await exportRoute.GET(apiRequest("/api/hotspots/export?range=24h&format=csv"))
+      expect(res.status).toBe(302)
+      expect(res.headers.get("location")).toMatch(/^https:\/\/s3\.example\.test\/signed\/titik-api_24h_\d{4}-\d{2}-\d{2}\.csv\?/)
+      expect(res.headers.get("cache-control")).toBe("no-store")
+      const [bucket, filename, contentType, body] = storeExport.mock.calls[0]!
+      expect(bucket).toBe("bucket-uji")
+      expect(filename).toMatch(/\.csv$/)
+      expect(contentType).toBe("text/csv; charset=utf-8")
+      expect(String(body).split("\n")[0]).toContain("latitude,longitude")
+    })
+
+    it("tanpa EXPORT_BUCKET tetap mengirim berkas langsung (perilaku lama)", async () => {
+      const res = await exportRoute.GET(apiRequest("/api/hotspots/export?format=csv"))
+      expect(res.status).toBe(200)
+      expect(storeExport).not.toHaveBeenCalled()
+    })
   })
 })
 
