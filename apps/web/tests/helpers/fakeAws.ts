@@ -82,8 +82,20 @@ function parseFilter(input: { FilterExpression?: string; ExpressionAttributeName
   })
 }
 
+/** Aturan validasi DynamoDB sungguhan yang tidak ditegakkan Moto, supaya tes unit ikut menangkapnya. */
+function assertValidExpression(input: { ExpressionAttributeNames?: Record<string, string>; ExpressionAttributeValues?: Record<string, unknown>; KeyConditionExpression?: string }) {
+  const fail = (message: string) => Object.assign(new Error(message), { name: "ValidationException" })
+  if (input.ExpressionAttributeNames && Object.keys(input.ExpressionAttributeNames).length === 0) throw fail("ExpressionAttributeNames must not be empty")
+  if (input.ExpressionAttributeValues && Object.keys(input.ExpressionAttributeValues).length === 0) throw fail("ExpressionAttributeValues must not be empty")
+  // String kosong hanya dilarang pada atribut KUNCI (:pk, :prefix); atribut biasa (mis. catatan "") boleh.
+  for (const key of [":pk", ":prefix"]) {
+    if (input.ExpressionAttributeValues?.[key] === "") throw fail(`One or more parameter values are not valid. The AttributeValue for a key attribute cannot contain an empty string value (${key})`)
+  }
+}
+
 export const fakeDocClient = {
   async send(command: unknown): Promise<Record<string, unknown>> {
+    assertValidExpression((command as { input: never }).input ?? {})
     if (command instanceof GetCommand) {
       const { pk, sk } = command.input.Key as { pk: string; sk: string }
       const item = fakeTable.get(pk, sk)

@@ -22,6 +22,8 @@
 ### Diperbaiki
 - `GET /api/alerts` akan mengembalikan 500 di DynamoDB sungguhan karena awalan kunci kosong ditolak; tertangkap
   oleh uji integrasi dan diperbaiki sebelum rilis.
+- Daftar peringatan juga gagal di DynamoDB asli karena `ExpressionAttributeNames` kosong ditolak (Moto menerimanya);
+  tertangkap saat uji terhadap AWS nyata. Tiruan di tes kini menegakkan kedua aturan DynamoDB itu.
 - Respons `POST/PATCH /api/alerts` tidak lagi memuat `createdBy` (uid admin).
 
 ## 1.0.0 — rilis final

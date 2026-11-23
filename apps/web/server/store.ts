@@ -125,6 +125,11 @@ async function remove(pk: string, sk: string, mustExist: boolean): Promise<void>
   }
 }
 
+/** Buang `#sk` bila tidak dipakai (nama yang tak dipakai ekspresi juga ditolak DynamoDB). */
+function usedNames(names: Record<string, string>, usesSortKey: boolean): Record<string, string> {
+  return usesSortKey ? names : Object.fromEntries(Object.entries(names).filter(([k]) => k !== "#sk"))
+}
+
 /** Query semua item dengan awalan `sk`, terbaru dulu, sampai `limit` item lolos filter (menelusuri halaman bila perlu). */
 async function queryPrefix(pk: string, prefix: string, limit: number, filters: Record<string, string> = {}, keysOnly = false): Promise<Item[]> {
   const names: Record<string, string> = { "#sk": "sk" }
@@ -145,7 +150,8 @@ async function queryPrefix(pk: string, prefix: string, limit: number, filters: R
         KeyConditionExpression: prefix ? "pk = :pk AND begins_with(#sk, :prefix)" : "pk = :pk",
         ...(filterParts.length ? { FilterExpression: filterParts.join(" AND ") } : {}),
         ...(keysOnly ? { ProjectionExpression: "pk, #sk" } : {}),
-        ExpressionAttributeNames: prefix || keysOnly ? names : Object.fromEntries(Object.entries(names).filter(([k]) => k !== "#sk")),
+        // DynamoDB menolak peta kosong; hanya kirim nama atribut yang benar-benar dipakai ekspresi.
+        ...(prefix || keysOnly || filterParts.length ? { ExpressionAttributeNames: usedNames(names, Boolean(prefix) || keysOnly) } : {}),
         ExpressionAttributeValues: values,
         ScanIndexForward: false,
         ExclusiveStartKey: startKey,

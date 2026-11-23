@@ -30,8 +30,10 @@ Perintah berguna: `npm run lint`, `npm run typecheck`, `npm test`, `npm run buil
 Aplikasi memakai **Amazon Cognito** (login) dan **Amazon DynamoDB** (data pengguna). Tanpa keduanya
 aplikasi tetap berjalan dalam mode demo. Perintah di bawah memakai AWS CLI; ganti `<...>`.
 
-> Alur ini diuji end-to-end terhadap emulator lokal (Moto) dan lewat Chrome. Perintah AWS CLI di bawah
-> **belum dijalankan pada akun AWS sungguhan** — cek opsinya dengan `aws <layanan> <perintah> help`.
+> Status pengujian: perintah 2.1–2.2 (tabel, user pool, app client, grup) **sudah dijalankan di akun AWS nyata**, dan
+> API diuji ujung-ke-ujung terhadap Cognito + DynamoDB asli (23/23: isolasi pengguna, grup admin, hapus akun) serta
+> preflight CORS Cognito asli. **Belum terbukti**: kebijakan IAM minimal di 2.3 (pengujian memakai role admin),
+> email kode verifikasi lewat browser, dan jalur EC2 + Caddy.
 
 ### 2.1 Tabel DynamoDB
 
